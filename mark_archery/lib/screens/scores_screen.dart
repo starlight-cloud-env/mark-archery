@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'new_scorecard_screen.dart';
+import 'scorecard_detail_screen.dart';
 
 enum ScoresView { active, history }
 
@@ -221,10 +222,40 @@ class _HistoryView extends StatelessWidget {
 
   // Placeholder data — shape mirrors what a real completed Scorecard will look like.
   final List<Map<String, dynamic>> _pastRounds = const [
-    {'type': 'Indoor', 'date': 'Sept 1', 'score': 275, 'maxPossible': 300},
-    {'type': 'Outdoor', 'date': 'Aug 28', 'score': 281, 'maxPossible': 300},
-    {'type': 'Indoor', 'date': 'Aug 24', 'score': 268, 'maxPossible': 300},
-    {'type': 'Outdoor', 'date': 'Aug 19', 'score': 287, 'maxPossible': 300},
+    {
+      'type': 'Indoor',
+      'date': 'Sept 1',
+      'score': 275,
+      'maxPossible': 300,
+      'maxScore': 10,
+      'ends': [
+        [9, 10, 8], [10, 9, 9], [8, 10, 10], [9, 9, 8],
+        [10, 10, 9], [9, 8, 9], [10, 9, 10], [9, 9, 8],
+        [10, 8, 9], [9, 10, 9],
+      ],
+    },
+    {
+      'type': 'Outdoor',
+      'date': 'Aug 28',
+      'score': 281,
+      'maxPossible': 300,
+      'maxScore': 10,
+      'ends': [
+        [10, 9, 9], [9, 10, 10], [9, 9, 9], [10, 10, 8],
+        [9, 9, 10], [8, 9, 9], [10, 10, 9], [9, 8, 9],
+        [10, 9, 10], [9, 10, 9],
+      ],
+    },
+    {'type': 'Indoor', 'date': 'Aug 24', 'score': 268, 'maxPossible': 300, 'maxScore': 10, 'ends': [
+      [8, 9, 9], [9, 8, 8], [9, 9, 9], [8, 9, 8],
+      [9, 8, 9], [8, 9, 9], [9, 9, 8], [9, 8, 9],
+      [8, 9, 9], [9, 9, 9],
+    ]},
+    {'type': 'Outdoor', 'date': 'Aug 19', 'score': 287, 'maxPossible': 300, 'maxScore': 10, 'ends': [
+      [10, 9, 10], [9, 10, 10], [10, 9, 9], [9, 10, 10],
+      [10, 9, 9], [9, 10, 10], [10, 9, 9], [10, 10, 9],
+      [9, 10, 9], [10, 9, 10],
+    ]},
   ];
 
   int get _bestScore =>
@@ -273,7 +304,19 @@ class _HistoryView extends StatelessWidget {
               score: round['score'],
               maxPossible: round['maxPossible'],
               onTap: () {
-                // Placeholder — navigate to a read-only scorecard detail view
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ScorecardDetailScreen(
+                      scorecardName: '${round['type']} Round',
+                      date: round['date'],
+                      totalScore: round['score'],
+                      maxPossible: round['maxPossible'],
+                      maxScore: round['maxScore'],
+                      ends: (round['ends'] as List).map((e) => List<int>.from(e)).toList(),
+                    ),
+                  ),
+                );
               },
             ),
           ),
