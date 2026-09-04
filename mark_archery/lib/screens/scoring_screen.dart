@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../models/scorecard.dart';
 
 class ScoringScreen extends StatefulWidget {
   final String scorecardName;
@@ -20,45 +21,38 @@ class ScoringScreen extends StatefulWidget {
 }
 
 class _ScoringScreenState extends State<ScoringScreen> {
-  // scores[endIndex][arrowIndex] — null means "not scored yet"
-  late List<List<int?>> _scores;
+  late Scorecard _scorecard;
 
   @override
   void initState() {
     super.initState();
-    _scores = List.generate(
-      widget.ends,
-      (_) => List.filled(widget.arrowsPerEnd, null),
+    _scorecard = Scorecard(
+      id: 'local-${DateTime.now().millisecondsSinceEpoch}', // placeholder until Supabase generates real IDs
+      archerId: 'local-archer', // placeholder until real auth exists
+      name: widget.scorecardName,
+      arrowsPerEnd: widget.arrowsPerEnd,
+      maxScore: widget.maxScore,
+      status: ScorecardStatus.active,
+      startedAt: DateTime.now(),
+      ends: List.generate(widget.ends, (_) => List.filled(widget.arrowsPerEnd, null)),
     );
   }
 
-  // Finds the first empty arrow slot, scanning end by end, arrow by arrow.
-  ({int end, int arrow})? get _nextEmptySlot {
-    for (int e = 0; e < _scores.length; e++) {
-      for (int a = 0; a < _scores[e].length; a++) {
-        if (_scores[e][a] == null) {
-          return (end: e, arrow: a);
-        }
-      }
-    }
-    return null; // scorecard is complete
-  }
-
   void _enterScore(int score) {
-    final slot = _nextEmptySlot;
+    final slot = _scorecard.nextEmptySlot;
     if (slot == null) return; // already full
 
     setState(() {
-      _scores[slot.end][slot.arrow] = score;
+      _scorecard.ends[slot.end][slot.arrow] = score;
     });
   }
 
   void _undoLast() {
-    for (int e = _scores.length - 1; e >= 0; e--) {
-      for (int a = _scores[e].length - 1; a >= 0; a--) {
-        if (_scores[e][a] != null) {
+    for (int e = _scorecard.ends.length - 1; e >= 0; e--) {
+      for (int a = _scorecard.ends[e].length - 1; a >= 0; a--) {
+        if (_scorecard.ends[e][a] != null) {
           setState(() {
-            _scores[e][a] = null;
+            _scorecard.ends[e][a] = null;
           });
           return;
         }
@@ -66,24 +60,14 @@ class _ScoringScreenState extends State<ScoringScreen> {
     }
   }
 
-  int _endTotal(int endIndex) {
-    return _scores[endIndex].fold(0, (sum, score) => sum + (score ?? 0));
-  }
-
-  int get _runningTotal {
-    return _scores
-        .expand((end) => end)
-        .fold(0, (sum, score) => sum + (score ?? 0));
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isComplete = _nextEmptySlot == null;
+    final isComplete = _scorecard.nextEmptySlot == null;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.scorecardName),
+        title: Text(_scorecard.name),
         actions: [
           IconButton(
             icon: const Icon(Icons.undo),
@@ -105,7 +89,7 @@ class _ScoringScreenState extends State<ScoringScreen> {
             child: Column(
               children: [
                 Text(
-                  '$_runningTotal',
+                  '${_scorecard.runningTotal}',
                   style: theme.textTheme.headlineMedium?.copyWith(
                     color: theme.colorScheme.primary,
                     fontWeight: FontWeight.w500,
@@ -125,15 +109,15 @@ class _ScoringScreenState extends State<ScoringScreen> {
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.all(16.0),
-              itemCount: widget.ends,
+              itemCount: _scorecard.totalEnds,
               itemBuilder: (context, endIndex) {
-                final isCurrentEnd = _nextEmptySlot?.end == endIndex;
+                final isCurrentEnd = _scorecard.nextEmptySlot?.end == endIndex;
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 10.0),
                   child: _EndRow(
                     endNumber: endIndex + 1,
-                    arrowScores: _scores[endIndex],
-                    endTotal: _endTotal(endIndex),
+                    arrowScores: _scorecard.ends[endIndex],
+                    endTotal: _scorecard.endTotal(endIndex),
                     isCurrentEnd: isCurrentEnd,
                   ),
                 );
@@ -143,7 +127,7 @@ class _ScoringScreenState extends State<ScoringScreen> {
 
           // Number pad, or completion state
           if (!isComplete) _ScoreInputPad(
-            maxScore: widget.maxScore,
+            maxScore: _scorecard.maxScore,
             onScoreSelected: _enterScore,
           ) else
             Padding(
@@ -152,7 +136,7 @@ class _ScoringScreenState extends State<ScoringScreen> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () {
-                    // Placeholder — save the completed scorecard
+                    // Placeholder — save the completed scorecard (Supabase, next phase)
                     Navigator.pop(context);
                   },
                   child: const Text('Finish & Save'),
@@ -251,7 +235,7 @@ class _ScoreInputPad extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final values = List.generate(maxScore + 1, (i) => maxScore - i); // e.g. 10..0
+    final values = List.generate(maxScore + 1, (i) => maxScore - i);
 
     return Container(
       padding: const EdgeInsets.all(12.0),
