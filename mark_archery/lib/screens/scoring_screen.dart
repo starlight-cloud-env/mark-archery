@@ -84,7 +84,7 @@ class _ScoringScreenState extends State<ScoringScreen> {
           // Running total banner
           Container(
             width: double.infinity,
-            color: theme.colorScheme.primary.withOpacity(0.08),
+            color: theme.colorScheme.primary.withValues(alpha: 0.08),
             padding: const EdgeInsets.symmetric(vertical: 12.0),
             child: Column(
               children: [
@@ -167,7 +167,7 @@ class _EndRow extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Card(
-      color: isCurrentEnd ? theme.colorScheme.primary.withOpacity(0.08) : null,
+      color: isCurrentEnd ? theme.colorScheme.primary.withValues(alpha: 0.08) : null,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
         child: Row(
@@ -213,7 +213,7 @@ class _ArrowChip extends StatelessWidget {
               ? theme.colorScheme.outlineVariant
               : theme.colorScheme.primary,
         ),
-        color: isEmpty ? null : theme.colorScheme.primary.withOpacity(0.12),
+        color: isEmpty ? null : theme.colorScheme.primary.withValues(alpha: 0.12),
       ),
       child: Text(
         isEmpty ? '' : '$score',

@@ -122,7 +122,7 @@ class _ContinueRoundCard extends StatelessWidget {
               Text(
                 label,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onPrimary.withOpacity(0.85),
+                  color: theme.colorScheme.onPrimary.withValues(alpha: 0.85),
                 ),
               ),
               const SizedBox(height: 12),
@@ -131,7 +131,7 @@ class _ContinueRoundCard extends StatelessWidget {
                 child: LinearProgressIndicator(
                   value: progress,
                   minHeight: 6,
-                  backgroundColor: theme.colorScheme.onPrimary.withOpacity(0.2),
+                  backgroundColor: theme.colorScheme.onPrimary.withValues(alpha: 0.2),
                   color: theme.colorScheme.onPrimary,
                 ),
               ),

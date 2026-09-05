@@ -156,7 +156,7 @@ class _ActiveRoundCard extends StatelessWidget {
                 child: LinearProgressIndicator(
                   value: progress,
                   minHeight: 6,
-                  backgroundColor: theme.colorScheme.primary.withOpacity(0.15),
+                  backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.15),
                   color: theme.colorScheme.primary,
                 ),
               ),
@@ -378,7 +378,7 @@ class _PastRoundTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         child: ListTile(
           leading: CircleAvatar(
-            backgroundColor: theme.colorScheme.primary.withOpacity(0.12),
+            backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.12),
             child: Icon(
               type == 'Indoor' ? Icons.home_outlined : Icons.park_outlined,
               color: theme.colorScheme.primary,

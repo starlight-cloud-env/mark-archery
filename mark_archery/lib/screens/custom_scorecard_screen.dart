@@ -88,7 +88,7 @@ class _CustomScorecardScreenState extends State<CustomScorecardScreen> {
             ),
             const SizedBox(height: 12),
             Card(
-              color: theme.colorScheme.primary.withOpacity(0.08),
+              color: theme.colorScheme.primary.withValues(alpha: 0.08),
               child: Padding(
                 padding: const EdgeInsets.all(14.0),
                 child: Text(

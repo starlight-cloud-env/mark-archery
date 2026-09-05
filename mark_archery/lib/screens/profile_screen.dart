@@ -27,7 +27,7 @@ class ProfileScreen extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 32,
-              backgroundColor: theme.colorScheme.primary.withOpacity(0.15),
+              backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.15),
               child: Text(
                 _name.isNotEmpty ? _name[0].toUpperCase() : '?',
                 style: theme.textTheme.headlineSmall?.copyWith(

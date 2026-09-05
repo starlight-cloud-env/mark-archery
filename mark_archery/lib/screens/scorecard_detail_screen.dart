@@ -33,7 +33,7 @@ class ScorecardDetailScreen extends StatelessWidget {
           // Summary banner
           Container(
             width: double.infinity,
-            color: theme.colorScheme.primary.withOpacity(0.08),
+            color: theme.colorScheme.primary.withValues(alpha: 0.08),
             padding: const EdgeInsets.symmetric(vertical: 16.0),
             child: Column(
               children: [
@@ -112,7 +112,7 @@ class _ReadOnlyEndRow extends StatelessWidget {
                     alignment: Alignment.center,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: theme.colorScheme.primary.withOpacity(0.12),
+                      color: theme.colorScheme.primary.withValues(alpha: 0.12),
                     ),
                     child: Text('$score', style: theme.textTheme.bodySmall),
                   );
