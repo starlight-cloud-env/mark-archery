@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../main.dart';
 import '../models/scorecard.dart';
 
 class ScoringScreen extends StatefulWidget {
@@ -7,6 +8,7 @@ class ScoringScreen extends StatefulWidget {
   final int ends;
   final int arrowsPerEnd;
   final int maxScore;
+  final Scorecard? existingScorecard;
 
   const ScoringScreen({
     super.key,
@@ -14,6 +16,7 @@ class ScoringScreen extends StatefulWidget {
     required this.ends,
     required this.arrowsPerEnd,
     this.maxScore = 10,
+    this.existingScorecard,
   });
 
   @override
@@ -22,29 +25,57 @@ class ScoringScreen extends StatefulWidget {
 
 class _ScoringScreenState extends State<ScoringScreen> {
   late Scorecard _scorecard;
+  bool _isSaving = false;
 
   @override
   void initState() {
     super.initState();
-    _scorecard = Scorecard(
-      id: 'local-${DateTime.now().millisecondsSinceEpoch}', // placeholder until Supabase generates real IDs
-      archerId: 'local-archer', // placeholder until real auth exists
-      name: widget.scorecardName,
-      arrowsPerEnd: widget.arrowsPerEnd,
-      maxScore: widget.maxScore,
-      status: ScorecardStatus.active,
-      startedAt: DateTime.now(),
-      ends: List.generate(widget.ends, (_) => List.filled(widget.arrowsPerEnd, null)),
-    );
+
+    if (widget.existingScorecard != null) {
+      // Resuming an in-progress round — use its saved data directly, nothing to create.
+      _scorecard = widget.existingScorecard!;
+    } else {
+      // Starting fresh.
+      _scorecard = Scorecard(
+        id: '',
+        archerId: supabase.auth.currentUser!.id,
+        name: widget.scorecardName,
+        arrowsPerEnd: widget.arrowsPerEnd,
+        maxScore: widget.maxScore,
+        status: ScorecardStatus.active,
+        startedAt: DateTime.now(),
+        ends: List.generate(widget.ends, (_) => List.filled(widget.arrowsPerEnd, null)),
+      );
+      _createScorecard();
+    }
+  }
+
+  Future<void> _createScorecard() async {
+    final json = _scorecard.toJson()..remove('id');
+    final response = await supabase.from('scorecards').insert(json).select().single();
+
+    setState(() {
+      _scorecard = Scorecard.fromJson(response);
+    });
+  }
+
+  Future<void> _persistEnds() async {
+    if (_scorecard.id.isEmpty) return; // hasn't finished creating yet
+
+    await supabase
+        .from('scorecards')
+        .update({'ends': _scorecard.ends})
+        .eq('id', _scorecard.id);
   }
 
   void _enterScore(int score) {
     final slot = _scorecard.nextEmptySlot;
-    if (slot == null) return; // already full
+    if (slot == null) return;
 
     setState(() {
       _scorecard.ends[slot.end][slot.arrow] = score;
     });
+    _persistEnds();
   }
 
   void _undoLast() {
@@ -54,8 +85,38 @@ class _ScoringScreenState extends State<ScoringScreen> {
           setState(() {
             _scorecard.ends[e][a] = null;
           });
+          _persistEnds();
           return;
         }
+      }
+    }
+  }
+
+  Future<void> _handleFinish() async {
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
+      await supabase
+          .from('scorecards')
+          .update({'status': 'completed'})
+          .eq('id', _scorecard.id);
+
+      if (mounted) {
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not save: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
       }
     }
   }
@@ -81,10 +142,9 @@ class _ScoringScreenState extends State<ScoringScreen> {
       ),
       body: Column(
         children: [
-          // Running total banner
           Container(
             width: double.infinity,
-            color: theme.colorScheme.primary.withValues(alpha: 0.08),
+            color: theme.colorScheme.primary.withOpacity(0.08),
             padding: const EdgeInsets.symmetric(vertical: 12.0),
             child: Column(
               children: [
@@ -104,8 +164,6 @@ class _ScoringScreenState extends State<ScoringScreen> {
               ],
             ),
           ),
-
-          // Ends list
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.all(16.0),
@@ -124,22 +182,25 @@ class _ScoringScreenState extends State<ScoringScreen> {
               },
             ),
           ),
-
-          // Number pad, or completion state
-          if (!isComplete) _ScoreInputPad(
-            maxScore: _scorecard.maxScore,
-            onScoreSelected: _enterScore,
-          ) else
+          if (!isComplete)
+            _ScoreInputPad(
+              maxScore: _scorecard.maxScore,
+              onScoreSelected: _enterScore,
+            )
+          else
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {
-                    // Placeholder — save the completed scorecard (Supabase, next phase)
-                    Navigator.pop(context);
-                  },
-                  child: const Text('Finish & Save'),
+                  onPressed: _isSaving ? null : _handleFinish,
+                  child: _isSaving
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Finish & Save'),
                 ),
               ),
             ),
@@ -167,7 +228,7 @@ class _EndRow extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Card(
-      color: isCurrentEnd ? theme.colorScheme.primary.withValues(alpha: 0.08) : null,
+      color: isCurrentEnd ? theme.colorScheme.primary.withOpacity(0.08) : null,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
         child: Row(
@@ -179,9 +240,7 @@ class _EndRow extends StatelessWidget {
             Expanded(
               child: Wrap(
                 spacing: 6,
-                children: arrowScores.map((score) {
-                  return _ArrowChip(score: score);
-                }).toList(),
+                children: arrowScores.map((score) => _ArrowChip(score: score)).toList(),
               ),
             ),
             Text('$endTotal', style: theme.textTheme.titleMedium),
@@ -209,16 +268,11 @@ class _ArrowChip extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         border: Border.all(
-          color: isEmpty
-              ? theme.colorScheme.outlineVariant
-              : theme.colorScheme.primary,
+          color: isEmpty ? theme.colorScheme.outlineVariant : theme.colorScheme.primary,
         ),
-        color: isEmpty ? null : theme.colorScheme.primary.withValues(alpha: 0.12),
+        color: isEmpty ? null : theme.colorScheme.primary.withOpacity(0.12),
       ),
-      child: Text(
-        isEmpty ? '' : '$score',
-        style: theme.textTheme.bodySmall,
-      ),
+      child: Text(isEmpty ? '' : '$score', style: theme.textTheme.bodySmall),
     );
   }
 }
@@ -227,10 +281,7 @@ class _ScoreInputPad extends StatelessWidget {
   final int maxScore;
   final ValueChanged<int> onScoreSelected;
 
-  const _ScoreInputPad({
-    required this.maxScore,
-    required this.onScoreSelected,
-  });
+  const _ScoreInputPad({required this.maxScore, required this.onScoreSelected});
 
   @override
   Widget build(BuildContext context) {
@@ -252,10 +303,7 @@ class _ScoreInputPad extends StatelessWidget {
             width: 52,
             height: 52,
             child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                padding: EdgeInsets.zero,
-                shape: const CircleBorder(),
-              ),
+              style: ElevatedButton.styleFrom(padding: EdgeInsets.zero, shape: const CircleBorder()),
               onPressed: () {
                 HapticFeedback.lightImpact();
                 onScoreSelected(value);

@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import '../main.dart';
 import 'splash_screen.dart';
+import 'edit_profile_screen.dart';
+import 'change_password_screen.dart';
+import 'manage_templates_screen.dart';
+import 'notifications_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -26,6 +30,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         .eq('id', userId)
         .single();
     return response;
+  }
+
+  void _refresh() {
+    setState(() {
+      _archerFuture = _fetchArcher();
+    });
   }
 
   Future<void> _handleSignOut(BuildContext context) async {
@@ -111,8 +121,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     leading: const Icon(Icons.edit_outlined),
                     title: const Text('Edit Profile'),
                     trailing: const Icon(Icons.chevron_right),
-                    onTap: () {
-                      // Placeholder — navigate to edit profile screen later
+                    onTap: () async {
+                      final changed = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => EditProfileScreen(currentName: name),
+                        ),
+                      );
+                      if (changed == true) {
+                        _refresh();
+                      }
                     },
                   ),
                   const Divider(height: 1),
@@ -121,7 +139,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     title: const Text('Change Password'),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () {
-                      // Placeholder
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const ChangePasswordScreen()),
+                      );
                     },
                   ),
                 ],
@@ -139,7 +160,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     title: const Text('Default Scoring Templates'),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () {
-                      // Placeholder — manage saved custom templates
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const ManageTemplatesScreen()),
+                      );
                     },
                   ),
                   const Divider(height: 1),
@@ -148,7 +172,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     title: const Text('Notifications'),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () {
-                      // Placeholder
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const NotificationsScreen()),
+                      );
                     },
                   ),
                 ],

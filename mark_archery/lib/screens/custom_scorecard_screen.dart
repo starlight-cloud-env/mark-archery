@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../main.dart';
 import 'scoring_screen.dart';
 
 class CustomScorecardScreen extends StatefulWidget {
@@ -14,6 +15,8 @@ class _CustomScorecardScreenState extends State<CustomScorecardScreen> {
 
   int _ends = 6;
   int _arrowsPerEnd = 3;
+  bool _saveAsTemplate = false;
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -21,18 +24,50 @@ class _CustomScorecardScreenState extends State<CustomScorecardScreen> {
     super.dispose();
   }
 
-  void _handleStart() {
-    if (_formKey.currentState!.validate()) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ScoringScreen(
-            scorecardName: _nameController.text,
-            ends: _ends,
-            arrowsPerEnd: _arrowsPerEnd,
+  Future<void> _handleStart() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      if (_saveAsTemplate) {
+        final userId = supabase.auth.currentUser!.id;
+        await supabase.from('scorecard_templates').insert({
+          'name': _nameController.text.trim(),
+          'ends': _ends,
+          'arrows_per_end': _arrowsPerEnd,
+          'max_score': 10,
+          'is_premade': false,
+          'created_by': userId,
+        });
+      }
+
+      if (mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ScoringScreen(
+              scorecardName: _nameController.text.trim(),
+              ends: _ends,
+              arrowsPerEnd: _arrowsPerEnd,
+            ),
           ),
-        ),
-      );
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Could not save template: $e')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSubmitting = false;
+        });
+      }
     }
   }
 
@@ -68,11 +103,7 @@ class _CustomScorecardScreenState extends State<CustomScorecardScreen> {
               value: _ends,
               min: 1,
               max: 20,
-              onChanged: (newValue) {
-                setState(() {
-                  _ends = newValue;
-                });
-              },
+              onChanged: (newValue) => setState(() => _ends = newValue),
             ),
             const SizedBox(height: 12),
             _NumberStepper(
@@ -80,15 +111,11 @@ class _CustomScorecardScreenState extends State<CustomScorecardScreen> {
               value: _arrowsPerEnd,
               min: 1,
               max: 12,
-              onChanged: (newValue) {
-                setState(() {
-                  _arrowsPerEnd = newValue;
-                });
-              },
+              onChanged: (newValue) => setState(() => _arrowsPerEnd = newValue),
             ),
             const SizedBox(height: 12),
             Card(
-              color: theme.colorScheme.primary.withValues(alpha: 0.08),
+              color: theme.colorScheme.primary.withOpacity(0.08),
               child: Padding(
                 padding: const EdgeInsets.all(14.0),
                 child: Text(
@@ -97,10 +124,25 @@ class _CustomScorecardScreenState extends State<CustomScorecardScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 28),
+            const SizedBox(height: 16),
+            CheckboxListTile(
+              value: _saveAsTemplate,
+              onChanged: (checked) => setState(() => _saveAsTemplate = checked ?? false),
+              title: const Text('Save as a reusable template'),
+              subtitle: const Text('Appears under "Choose a Template" next time'),
+              contentPadding: EdgeInsets.zero,
+              controlAffinity: ListTileControlAffinity.leading,
+            ),
+            const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: _handleStart,
-              child: const Text('Start Scoring'),
+              onPressed: _isSubmitting ? null : _handleStart,
+              child: _isSubmitting
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Start Scoring'),
             ),
           ],
         ),
@@ -133,20 +175,14 @@ class _NumberStepper extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
         child: Row(
           children: [
-            Expanded(
-              child: Text(label, style: theme.textTheme.bodyLarge),
-            ),
+            Expanded(child: Text(label, style: theme.textTheme.bodyLarge)),
             IconButton(
               icon: const Icon(Icons.remove_circle_outline),
               onPressed: value > min ? () => onChanged(value - 1) : null,
             ),
             SizedBox(
               width: 32,
-              child: Text(
-                '$value',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.titleMedium,
-              ),
+              child: Text('$value', textAlign: TextAlign.center, style: theme.textTheme.titleMedium),
             ),
             IconButton(
               icon: const Icon(Icons.add_circle_outline),
