@@ -80,8 +80,14 @@ class _ActiveScoresViewState extends State<_ActiveScoresView> {
     });
   }
 
+  Future<void> _deleteRound(String id) async {
+    await supabase.from('scorecards').delete().eq('id', id);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return FutureBuilder<List<Scorecard>>(
       future: _scorecardsFuture,
       builder: (context, snapshot) {
@@ -104,9 +110,44 @@ class _ActiveScoresViewState extends State<_ActiveScoresView> {
             final round = rounds[index];
             return Padding(
               padding: const EdgeInsets.only(bottom: 12.0),
-              child: _ActiveRoundCard(
-                scorecard: round,
-                onReturned: _refresh,
+              child: Dismissible(
+                key: ValueKey(round.id),
+                direction: DismissDirection.endToStart,
+                background: Container(
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.error,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.delete_outline, color: Colors.white),
+                ),
+                confirmDismiss: (direction) async {
+                  return await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Abandon this round?'),
+                      content: Text('This will permanently delete "${round.name}" and its progress.'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          child: Text('Delete', style: TextStyle(color: theme.colorScheme.error)),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+                onDismissed: (direction) async {
+                  await _deleteRound(round.id);
+                },
+                child: _ActiveRoundCard(
+                  scorecard: round,
+                  onReturned: _refresh,
+                ),
               ),
             );
           },
@@ -145,7 +186,6 @@ class _ActiveRoundCard extends StatelessWidget {
               ),
             ),
           );
-          // Refresh the list once we're back, in case progress changed or it was completed.
           onReturned();
         },
         child: Padding(

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'theme/app_theme.dart';
 import 'screens/splash_screen.dart';
@@ -6,9 +7,11 @@ import 'screens/splash_screen.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  await dotenv.load(fileName: '.env');
+
   await Supabase.initialize(
-    url: 'https://lgsvlkyguvxboovwxttq.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxnc3Zsa3lndXZ4Ym9vdnd4dHRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODg1NTMwNTAsImV4cCI6MjEwNDEyOTA1MH0.2n5cTbUx6cJH7xJo2b9ultoXu0tScAGGmCX_FsFMZqM',
+    url: dotenv.env['SUPABASE_URL']!,
+    anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
 
   runApp(const MyApp());
