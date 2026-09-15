@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+
 import '../main.dart';
 import '../models/scorecard.dart';
 
@@ -26,6 +27,7 @@ class ScoringScreen extends StatefulWidget {
 class _ScoringScreenState extends State<ScoringScreen> {
   late Scorecard _scorecard;
   bool _isSaving = false;
+  bool _hasSaveError = false;
 
   @override
   void initState() {
@@ -44,7 +46,10 @@ class _ScoringScreenState extends State<ScoringScreen> {
         maxScore: widget.maxScore,
         status: ScorecardStatus.active,
         startedAt: DateTime.now(),
-        ends: List.generate(widget.ends, (_) => List.filled(widget.arrowsPerEnd, null)),
+        ends: List.generate(
+          widget.ends,
+          (_) => List.filled(widget.arrowsPerEnd, null),
+        ),
       );
       _createScorecard();
     }
@@ -52,7 +57,11 @@ class _ScoringScreenState extends State<ScoringScreen> {
 
   Future<void> _createScorecard() async {
     final json = _scorecard.toJson()..remove('id');
-    final response = await supabase.from('scorecards').insert(json).select().single();
+    final response = await supabase
+        .from('scorecards')
+        .insert(json)
+        .select()
+        .single();
 
     setState(() {
       _scorecard = Scorecard.fromJson(response);
@@ -62,10 +71,36 @@ class _ScoringScreenState extends State<ScoringScreen> {
   Future<void> _persistEnds() async {
     if (_scorecard.id.isEmpty) return; // hasn't finished creating yet
 
-    await supabase
-        .from('scorecards')
-        .update({'ends': _scorecard.ends})
-        .eq('id', _scorecard.id);
+    const maxAttempts = 3;
+    for (var attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        await supabase
+            .from('scorecards')
+            .update({'ends': _scorecard.ends})
+            .eq('id', _scorecard.id);
+
+        if (_hasSaveError && mounted) {
+          setState(() => _hasSaveError = false);
+        }
+        return;
+      } catch (e) {
+        if (attempt == maxAttempts) {
+          if (mounted) {
+            setState(() => _hasSaveError = true);
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text(
+                  "Couldn't save your last score — check your connection.",
+                ),
+                action: SnackBarAction(label: 'Retry', onPressed: _persistEnds),
+              ),
+            );
+          }
+        } else {
+          await Future.delayed(Duration(seconds: attempt * 2));
+        }
+      }
+    }
   }
 
   void _enterScore(int score) {
@@ -108,9 +143,8 @@ class _ScoringScreenState extends State<ScoringScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not save: $e')),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Could not save: $e')));
       }
     } finally {
       if (mounted) {
@@ -130,6 +164,12 @@ class _ScoringScreenState extends State<ScoringScreen> {
       appBar: AppBar(
         title: Text(_scorecard.name),
         actions: [
+          if (_hasSaveError)
+            IconButton(
+              icon: Icon(Icons.cloud_off, color: theme.colorScheme.error),
+              onPressed: _persistEnds,
+              tooltip: 'Not saved — tap to retry',
+            ),
           IconButton(
             icon: const Icon(Icons.undo),
             onPressed: () {
@@ -240,7 +280,9 @@ class _EndRow extends StatelessWidget {
             Expanded(
               child: Wrap(
                 spacing: 6,
-                children: arrowScores.map((score) => _ArrowChip(score: score)).toList(),
+                children: arrowScores
+                    .map((score) => _ArrowChip(score: score))
+                    .toList(),
               ),
             ),
             Text('$endTotal', style: theme.textTheme.titleMedium),
@@ -268,7 +310,9 @@ class _ArrowChip extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         border: Border.all(
-          color: isEmpty ? theme.colorScheme.outlineVariant : theme.colorScheme.primary,
+          color: isEmpty
+              ? theme.colorScheme.outlineVariant
+              : theme.colorScheme.primary,
         ),
         color: isEmpty ? null : theme.colorScheme.primary.withOpacity(0.12),
       ),
@@ -292,7 +336,9 @@ class _ScoreInputPad extends StatelessWidget {
       padding: const EdgeInsets.all(12.0),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        border: Border(top: BorderSide(color: theme.colorScheme.outlineVariant)),
+        border: Border(
+          top: BorderSide(color: theme.colorScheme.outlineVariant),
+        ),
       ),
       child: Wrap(
         alignment: WrapAlignment.center,
@@ -303,7 +349,10 @@ class _ScoreInputPad extends StatelessWidget {
             width: 52,
             height: 52,
             child: ElevatedButton(
-              style: ElevatedButton.styleFrom(padding: EdgeInsets.zero, shape: const CircleBorder()),
+              style: ElevatedButton.styleFrom(
+                padding: EdgeInsets.zero,
+                shape: const CircleBorder(),
+              ),
               onPressed: () {
                 HapticFeedback.lightImpact();
                 onScoreSelected(value);

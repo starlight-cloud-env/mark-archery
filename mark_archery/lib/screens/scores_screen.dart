@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../main.dart';
 import '../models/scorecard.dart';
 import 'new_scorecard_screen.dart';
@@ -25,8 +26,16 @@ class _ScoresScreenState extends State<ScoresScreen> {
           padding: const EdgeInsets.all(16.0),
           child: SegmentedButton<ScoresView>(
             segments: const [
-              ButtonSegment(value: ScoresView.active, label: Text('Active'), icon: Icon(Icons.gps_fixed)),
-              ButtonSegment(value: ScoresView.history, label: Text('History'), icon: Icon(Icons.history)),
+              ButtonSegment(
+                value: ScoresView.active,
+                label: Text('Active'),
+                icon: Icon(Icons.gps_fixed),
+              ),
+              ButtonSegment(
+                value: ScoresView.history,
+                label: Text('History'),
+                icon: Icon(Icons.history),
+              ),
             ],
             selected: {_selectedView},
             onSelectionChanged: (newSelection) {
@@ -103,54 +112,68 @@ class _ActiveScoresViewState extends State<_ActiveScoresView> {
           return const _EmptyActiveState();
         }
 
-        return ListView.builder(
-          padding: const EdgeInsets.all(16.0),
-          itemCount: rounds.length,
-          itemBuilder: (context, index) {
-            final round = rounds[index];
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12.0),
-              child: Dismissible(
-                key: ValueKey(round.id),
-                direction: DismissDirection.endToStart,
-                background: Container(
-                  alignment: Alignment.centerRight,
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.error,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(Icons.delete_outline, color: Colors.white),
-                ),
-                confirmDismiss: (direction) async {
-                  return await showDialog<bool>(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: const Text('Abandon this round?'),
-                      content: Text('This will permanently delete "${round.name}" and its progress.'),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, false),
-                          child: const Text('Cancel'),
-                        ),
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, true),
-                          child: Text('Delete', style: TextStyle(color: theme.colorScheme.error)),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-                onDismissed: (direction) async {
-                  await _deleteRound(round.id);
-                },
-                child: _ActiveRoundCard(
-                  scorecard: round,
-                  onReturned: _refresh,
-                ),
-              ),
-            );
+        return RefreshIndicator(
+          onRefresh: () async {
+            _refresh();
+            await _scorecardsFuture;
           },
+          child: ListView.builder(
+            padding: const EdgeInsets.all(16.0),
+            itemCount: rounds.length,
+            itemBuilder: (context, index) {
+              final round = rounds[index];
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12.0),
+                child: Dismissible(
+                  key: ValueKey(round.id),
+                  direction: DismissDirection.endToStart,
+                  background: Container(
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.error,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.delete_outline,
+                      color: Colors.white,
+                    ),
+                  ),
+                  confirmDismiss: (direction) async {
+                    return await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Abandon this round?'),
+                        content: Text(
+                          'This will permanently delete "${round.name}" and its progress.',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            child: const Text('Cancel'),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, true),
+                            child: Text(
+                              'Delete',
+                              style: TextStyle(color: theme.colorScheme.error),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                  onDismissed: (direction) async {
+                    await _deleteRound(round.id);
+                  },
+                  child: _ActiveRoundCard(
+                    scorecard: round,
+                    onReturned: _refresh,
+                  ),
+                ),
+              );
+            },
+          ),
         );
       },
     );
@@ -199,13 +222,18 @@ class _ActiveRoundCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   Text(scorecard.name, style: theme.textTheme.titleMedium),
                   const Spacer(),
-                  Icon(Icons.chevron_right, color: theme.colorScheme.onSurfaceVariant),
+                  Icon(
+                    Icons.chevron_right,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ],
               ),
               const SizedBox(height: 4),
               Text(
                 'End $currentEnd of ${scorecard.totalEnds}',
-                style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
               const SizedBox(height: 10),
               ClipRRect(
@@ -238,19 +266,30 @@ class _EmptyActiveState extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.gps_fixed, size: 48, color: theme.colorScheme.onSurfaceVariant),
+            Icon(
+              Icons.gps_fixed,
+              size: 48,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
             const SizedBox(height: 16),
             Text('No active rounds', style: theme.textTheme.titleMedium),
             const SizedBox(height: 8),
             Text(
               'Start a new scorecard to begin tracking your round.',
               textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
             const SizedBox(height: 20),
             ElevatedButton.icon(
               onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => const NewScorecardScreen()));
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const NewScorecardScreen(),
+                  ),
+                );
               },
               icon: const Icon(Icons.add),
               label: const Text('Start New Scorecard'),
@@ -290,8 +329,20 @@ class _HistoryViewState extends State<_HistoryView> {
     return response.map((json) => Scorecard.fromJson(json)).toList();
   }
 
+  void _refresh() {
+    setState(() {
+      _scorecardsFuture = _fetchHistory();
+    });
+  }
+
+  Future<void> _deleteRound(String id) async {
+    await supabase.from('scorecards').delete().eq('id', id);
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return FutureBuilder<List<Scorecard>>(
       future: _scorecardsFuture,
       builder: (context, snapshot) {
@@ -307,46 +358,118 @@ class _HistoryViewState extends State<_HistoryView> {
           return const _EmptyHistoryState();
         }
 
-        final bestScore = rounds.map((r) => r.runningTotal).reduce((a, b) => a > b ? a : b);
-        final averageScore = rounds.map((r) => r.runningTotal).reduce((a, b) => a + b) / rounds.length;
+        final bestScore = rounds
+            .map((r) => r.runningTotal)
+            .reduce((a, b) => a > b ? a : b);
+        final averageScore =
+            rounds.map((r) => r.runningTotal).reduce((a, b) => a + b) /
+            rounds.length;
 
-        return ListView(
-          padding: const EdgeInsets.all(16.0),
-          children: [
-            Row(
-              children: [
-                Expanded(child: _SummaryStat(label: 'Best Score', value: '$bestScore')),
-                const SizedBox(width: 12),
-                Expanded(child: _SummaryStat(label: 'Average', value: averageScore.toStringAsFixed(1))),
-              ],
-            ),
-            const SizedBox(height: 20),
-            Text('All Rounds', style: Theme.of(context).textTheme.titleMedium),
-            const SizedBox(height: 8),
-            ...rounds.map(
-              (round) => Padding(
-                padding: const EdgeInsets.only(bottom: 8.0),
-                child: _PastRoundTile(
-                  scorecard: round,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ScorecardDetailScreen(
-                          scorecardName: round.name,
-                          date: round.startedAt.toLocal().toString().split(' ')[0],
-                          totalScore: round.runningTotal,
-                          maxPossible: round.maxPossible,
-                          maxScore: round.maxScore,
-                          ends: round.ends.map((e) => e.map((s) => s ?? 0).toList()).toList(),
-                        ),
+        return RefreshIndicator(
+          onRefresh: () async {
+            _refresh();
+            await _scorecardsFuture;
+          },
+          child: ListView(
+            padding: const EdgeInsets.all(16.0),
+            children: [
+              Row(
+                children: [
+                  Expanded(
+                    child: _SummaryStat(
+                      label: 'Best Score',
+                      value: '$bestScore',
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _SummaryStat(
+                      label: 'Average',
+                      value: averageScore.toStringAsFixed(1),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'All Rounds',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              const SizedBox(height: 8),
+              ...rounds.map(
+                (round) => Padding(
+                  padding: const EdgeInsets.only(bottom: 8.0),
+                  child: Dismissible(
+                    key: ValueKey(round.id),
+                    direction: DismissDirection.endToStart,
+                    background: Container(
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.error,
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                    );
-                  },
+                      child: const Icon(
+                        Icons.delete_outline,
+                        color: Colors.white,
+                      ),
+                    ),
+                    confirmDismiss: (direction) async {
+                      return await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Delete this round?'),
+                          content: Text(
+                            'This will permanently delete "${round.name}" from your history.',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              child: Text(
+                                'Delete',
+                                style: TextStyle(
+                                  color: theme.colorScheme.error,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                    onDismissed: (direction) async {
+                      await _deleteRound(round.id);
+                    },
+                    child: _PastRoundTile(
+                      scorecard: round,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => ScorecardDetailScreen(
+                              scorecardName: round.name,
+                              date: round.startedAt.toLocal().toString().split(
+                                ' ',
+                              )[0],
+                              totalScore: round.runningTotal,
+                              maxPossible: round.maxPossible,
+                              maxScore: round.maxScore,
+                              ends: round.ends
+                                  .map((e) => e.map((s) => s ?? 0).toList())
+                                  .toList(),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         );
       },
     );
@@ -369,7 +492,12 @@ class _SummaryStat extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(value, style: theme.textTheme.titleLarge?.copyWith(color: theme.colorScheme.primary)),
+            Text(
+              value,
+              style: theme.textTheme.titleLarge?.copyWith(
+                color: theme.colorScheme.primary,
+              ),
+            ),
             Text(label, style: theme.textTheme.bodySmall),
           ],
         ),
@@ -395,11 +523,20 @@ class _PastRoundTile extends StatelessWidget {
         child: ListTile(
           leading: CircleAvatar(
             backgroundColor: theme.colorScheme.primary.withOpacity(0.12),
-            child: Icon(Icons.gps_fixed, color: theme.colorScheme.primary, size: 20),
+            child: Icon(
+              Icons.gps_fixed,
+              color: theme.colorScheme.primary,
+              size: 20,
+            ),
           ),
           title: Text(scorecard.name),
-          subtitle: Text(scorecard.startedAt.toLocal().toString().split(' ')[0]),
-          trailing: Text('${scorecard.runningTotal} / ${scorecard.maxPossible}', style: theme.textTheme.titleMedium),
+          subtitle: Text(
+            scorecard.startedAt.toLocal().toString().split(' ')[0],
+          ),
+          trailing: Text(
+            '${scorecard.runningTotal} / ${scorecard.maxPossible}',
+            style: theme.textTheme.titleMedium,
+          ),
         ),
       ),
     );
@@ -419,14 +556,20 @@ class _EmptyHistoryState extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.history, size: 48, color: theme.colorScheme.onSurfaceVariant),
+            Icon(
+              Icons.history,
+              size: 48,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
             const SizedBox(height: 16),
             Text('No rounds yet', style: theme.textTheme.titleMedium),
             const SizedBox(height: 8),
             Text(
               'Completed scorecards will show up here.',
               textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ),
           ],
         ),
