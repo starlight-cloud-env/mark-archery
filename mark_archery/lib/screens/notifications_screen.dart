@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../main.dart';
 
 class NotificationsScreen extends StatefulWidget {
@@ -11,6 +12,7 @@ class NotificationsScreen extends StatefulWidget {
 class _NotificationsScreenState extends State<NotificationsScreen> {
   bool? _enabled;
   bool _isSaving = false;
+  String? _loadError;
 
   @override
   void initState() {
@@ -19,16 +21,22 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   Future<void> _loadPreference() async {
-    final userId = supabase.auth.currentUser!.id;
-    final response = await supabase
-        .from('archers')
-        .select('notifications_enabled')
-        .eq('id', userId)
-        .single();
+    try {
+      final userId = supabase.auth.currentUser!.id;
+      final response = await supabase
+          .from('archers')
+          .select('notifications_enabled')
+          .eq('id', userId)
+          .single();
 
-    setState(() {
-      _enabled = response['notifications_enabled'] as bool? ?? true;
-    });
+      setState(() {
+        _enabled = response['notifications_enabled'] as bool? ?? true;
+      });
+    } catch (e) {
+      setState(() {
+        _loadError = 'Could not load your preference. Please try again.';
+      });
+    }
   }
 
   Future<void> _togglePreference(bool value) async {
@@ -38,16 +46,32 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     });
 
     final userId = supabase.auth.currentUser!.id;
-    await supabase.from('archers').update({'notifications_enabled': value}).eq('id', userId);
+    await supabase
+        .from('archers')
+        .update({'notifications_enabled': value})
+        .eq('id', userId);
 
     if (mounted) setState(() => _isSaving = false);
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
       appBar: AppBar(title: const Text('Notifications')),
-      body: _enabled == null
+      body: _loadError != null
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Text(
+                  _loadError!,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: theme.colorScheme.error),
+                ),
+              ),
+            )
+          : _enabled == null
           ? const Center(child: CircularProgressIndicator())
           : ListView(
               padding: const EdgeInsets.all(16.0),
@@ -56,7 +80,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   value: _enabled!,
                   onChanged: _isSaving ? null : _togglePreference,
                   title: const Text('Enable Notifications'),
-                  subtitle: const Text('Reminders and updates about your rounds'),
+                  subtitle: const Text(
+                    'Reminders and updates about your rounds',
+                  ),
                   contentPadding: EdgeInsets.zero,
                 ),
               ],

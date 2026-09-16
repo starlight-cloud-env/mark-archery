@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../main.dart';
 import '../models/scorecard_template.dart';
 
@@ -49,6 +50,19 @@ class _ManageTemplatesScreenState extends State<ManageTemplatesScreen> {
             return const Center(child: CircularProgressIndicator());
           }
 
+          if (snapshot.hasError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Text(
+                  'Could not load templates: ${snapshot.error}',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: theme.colorScheme.error),
+                ),
+              ),
+            );
+          }
+
           final templates = snapshot.data ?? [];
           if (templates.isEmpty) {
             return Center(
@@ -57,7 +71,9 @@ class _ManageTemplatesScreenState extends State<ManageTemplatesScreen> {
                 child: Text(
                   'No custom templates saved yet. Check "Save as a reusable template" when building a custom scorecard.',
                   textAlign: TextAlign.center,
-                  style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ),
             );
@@ -71,9 +87,14 @@ class _ManageTemplatesScreenState extends State<ManageTemplatesScreen> {
               return Card(
                 child: ListTile(
                   title: Text(template.name),
-                  subtitle: Text('${template.ends} ends · ${template.arrowsPerEnd} arrows/end'),
+                  subtitle: Text(
+                    '${template.ends} ends · ${template.arrowsPerEnd} arrows/end',
+                  ),
                   trailing: IconButton(
-                    icon: Icon(Icons.delete_outline, color: theme.colorScheme.error),
+                    icon: Icon(
+                      Icons.delete_outline,
+                      color: theme.colorScheme.error,
+                    ),
                     onPressed: () => _deleteTemplate(template.id),
                   ),
                 ),

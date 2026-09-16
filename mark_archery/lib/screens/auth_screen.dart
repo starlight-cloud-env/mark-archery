@@ -124,10 +124,17 @@ class _AuthScreenState extends State<AuthScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        'archers_mark',
+                        'Mark',
                         style: theme.textTheme.headlineMedium?.copyWith(
                           color: theme.colorScheme.primary,
                           fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Archery Scorecard',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
                       const SizedBox(height: 32),
@@ -186,8 +193,8 @@ class _AuthScreenState extends State<AuthScreen> {
                       const SizedBox(height: 16),
                       OutlinedButton.icon(
                         onPressed: _isLoading ? null : _handleGoogleSignIn,
-                        icon: const Icon(Icons.g_mobiledata, size: 28),
-                        label: const Text('Continue with Google'),
+                        icon: const Icon(Icons.g_mobiledata, size: 22),
+                        label: const Text('Continue with Google  '),
                       ),
                       const SizedBox(height: 16),
                       TextButton(
