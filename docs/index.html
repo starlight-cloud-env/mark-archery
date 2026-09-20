@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mark - Archery Scorecard</title>
+<style>
+  :root {
+    --bronze: #A0632D;
+    --ink: #1A1A1A;
+    --muted: #6E6E6E;
+    --bg: #F2F2F0;
+    --border: #E8E8E8;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+  }
+  .wrap {
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 80px 20px;
+    text-align: center;
+  }
+  h1 {
+    color: var(--bronze);
+    font-size: 1.8rem;
+    margin: 0 0 8px;
+    font-weight: 600;
+  }
+  p {
+    color: var(--muted);
+    margin: 0 0 32px;
+  }
+  nav {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    border-top: 1px solid var(--border);
+    padding-top: 24px;
+  }
+  a {
+    color: var(--bronze);
+    text-decoration: none;
+    font-weight: 500;
+  }
+  a:hover {
+    text-decoration: underline;
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Mark — Archery Scorecard</h1>
+    <p>A simple, focused scorekeeping app for archers.</p>
+    <nav>
+      <a href="/privacy.html">Privacy Policy</a>
+      <a href="/terms.html">Terms of Service</a>
+    </nav>
+  </div>
+</body>
+</html>
