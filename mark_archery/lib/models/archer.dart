@@ -3,11 +3,7 @@ class Archer {
   final String name;
   final String email;
 
-  const Archer({
-    required this.id,
-    required this.name,
-    required this.email,
-  });
+  const Archer({required this.id, required this.name, required this.email});
 
   factory Archer.fromJson(Map<String, dynamic> json) {
     return Archer(
@@ -18,10 +14,6 @@ class Archer {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'name': name,
-      'email': email,
-    };
+    return {'id': id, 'name': name, 'email': email};
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import 'home_screen.dart';
 import 'scores_screen.dart';
 import 'profile_screen.dart';
@@ -31,16 +32,16 @@ class _HomeShellState extends State<HomeShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_titles[_selectedIndex]),
-      ),
+      appBar: AppBar(title: Text(_titles[_selectedIndex])),
       body: _screens[_selectedIndex],
       floatingActionButton: _selectedIndex == 1
           ? FloatingActionButton(
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const NewScorecardScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const NewScorecardScreen(),
+                  ),
                 );
               },
               child: const Icon(Icons.add),

@@ -75,14 +75,18 @@ final lightTheme = _shared.copyWith(
       foregroundColor: _lightColorScheme.onPrimary,
       elevation: 0,
       padding: const EdgeInsets.symmetric(vertical: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(_radius)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(_radius),
+      ),
       textStyle: const TextStyle(fontWeight: FontWeight.w500),
     ),
   ),
   outlinedButtonTheme: OutlinedButtonThemeData(
     style: OutlinedButton.styleFrom(
       padding: const EdgeInsets.symmetric(vertical: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(_radius)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(_radius),
+      ),
       side: BorderSide(color: _lightColorScheme.outline),
     ),
   ),
@@ -95,7 +99,9 @@ final lightTheme = _shared.copyWith(
     labelTextStyle: WidgetStateProperty.resolveWith((states) {
       return TextStyle(
         fontSize: 11,
-        fontWeight: states.contains(WidgetState.selected) ? FontWeight.w600 : FontWeight.w400,
+        fontWeight: states.contains(WidgetState.selected)
+            ? FontWeight.w600
+            : FontWeight.w400,
         color: states.contains(WidgetState.selected)
             ? _lightColorScheme.primary
             : _lightColorScheme.onSurfaceVariant,
@@ -147,14 +153,18 @@ final darkTheme = _shared.copyWith(
       foregroundColor: _darkColorScheme.onPrimary,
       elevation: 0,
       padding: const EdgeInsets.symmetric(vertical: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(_radius)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(_radius),
+      ),
       textStyle: const TextStyle(fontWeight: FontWeight.w500),
     ),
   ),
   outlinedButtonTheme: OutlinedButtonThemeData(
     style: OutlinedButton.styleFrom(
       padding: const EdgeInsets.symmetric(vertical: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(_radius)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(_radius),
+      ),
       side: BorderSide(color: _darkColorScheme.outline),
     ),
   ),
@@ -167,7 +177,9 @@ final darkTheme = _shared.copyWith(
     labelTextStyle: WidgetStateProperty.resolveWith((states) {
       return TextStyle(
         fontSize: 11,
-        fontWeight: states.contains(WidgetState.selected) ? FontWeight.w600 : FontWeight.w400,
+        fontWeight: states.contains(WidgetState.selected)
+            ? FontWeight.w600
+            : FontWeight.w400,
         color: states.contains(WidgetState.selected)
             ? _darkColorScheme.primary
             : _darkColorScheme.onSurfaceVariant,

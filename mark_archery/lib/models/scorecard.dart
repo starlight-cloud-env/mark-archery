@@ -28,7 +28,9 @@ class Scorecard {
   }
 
   int get runningTotal {
-    return ends.expand((end) => end).fold(0, (sum, score) => sum + (score ?? 0));
+    return ends
+        .expand((end) => end)
+        .fold(0, (sum, score) => sum + (score ?? 0));
   }
 
   int get maxPossible => totalEnds * arrowsPerEnd * maxScore;

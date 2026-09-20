@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 import '../main.dart';
 import 'splash_screen.dart';
 import 'edit_profile_screen.dart';
@@ -36,6 +38,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() {
       _archerFuture = _fetchArcher();
     });
+  }
+
+  Future<void> _openLink(String url) async {
+    final uri = Uri.parse(url);
+    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Could not open $url')));
+      }
+    }
   }
 
   Future<void> _handleSignOut(BuildContext context) async {
@@ -105,7 +117,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               children: [
                 CircleAvatar(
                   radius: 32,
-                  backgroundColor: theme.colorScheme.primary.withOpacity(0.15),
+                  backgroundColor: theme.colorScheme.primary.withValues(
+                    alpha: 0.15,
+                  ),
                   child: Text(
                     name.isNotEmpty ? name[0].toUpperCase() : '?',
                     style: theme.textTheme.headlineSmall?.copyWith(
@@ -145,7 +159,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       final changed = await Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => EditProfileScreen(currentName: name),
+                          builder: (context) =>
+                              EditProfileScreen(currentName: name),
                         ),
                       );
                       if (changed == true) {
@@ -161,7 +176,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const ChangePasswordScreen()),
+                        MaterialPageRoute(
+                          builder: (context) => const ChangePasswordScreen(),
+                        ),
                       );
                     },
                   ),
@@ -182,7 +199,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const ManageTemplatesScreen()),
+                        MaterialPageRoute(
+                          builder: (context) => const ManageTemplatesScreen(),
+                        ),
                       );
                     },
                   ),
@@ -194,9 +213,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const NotificationsScreen()),
+                        MaterialPageRoute(
+                          builder: (context) => const NotificationsScreen(),
+                        ),
                       );
                     },
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            Text('Legal', style: theme.textTheme.titleMedium),
+            const SizedBox(height: 8),
+            Card(
+              child: Column(
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.privacy_tip_outlined),
+                    title: const Text('Privacy Policy'),
+                    trailing: const Icon(Icons.open_in_new, size: 18),
+                    onTap: () => _openLink('https://markarchery.app/privacy'),
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: const Icon(Icons.description_outlined),
+                    title: const Text('Terms of Service'),
+                    trailing: const Icon(Icons.open_in_new, size: 18),
+                    onTap: () => _openLink('https://markarchery.app/terms'),
                   ),
                 ],
               ),

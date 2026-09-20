@@ -31,6 +31,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   Future<void> _handleCreateAccount() async {
+    if (_passwordController.text.length < 6) {
+      setState(() {
+        _errorMessage = 'Password must be at least 6 characters';
+      });
+      return;
+    }
     if (_passwordController.text != _confirmPasswordController.text) {
       setState(() {
         _errorMessage = 'Passwords do not match';

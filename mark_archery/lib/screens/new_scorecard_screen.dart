@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../main.dart';
 import '../models/scorecard.dart';
 import '../models/scorecard_template.dart';
@@ -16,7 +17,10 @@ class _NewScorecardCheckResult {
   final Scorecard? existingActive;
   final List<ScorecardTemplate> templates;
 
-  const _NewScorecardCheckResult({required this.existingActive, required this.templates});
+  const _NewScorecardCheckResult({
+    required this.existingActive,
+    required this.templates,
+  });
 }
 
 class _NewScorecardScreenState extends State<NewScorecardScreen> {
@@ -54,7 +58,9 @@ class _NewScorecardScreenState extends State<NewScorecardScreen> {
 
     return _NewScorecardCheckResult(
       existingActive: null,
-      templates: templateRows.map((json) => ScorecardTemplate.fromJson(json)).toList(),
+      templates: templateRows
+          .map((json) => ScorecardTemplate.fromJson(json))
+          .toList(),
     );
   }
 
@@ -84,14 +90,24 @@ class _NewScorecardScreenState extends State<NewScorecardScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.gps_fixed, size: 48, color: theme.colorScheme.primary),
+                    Icon(
+                      Icons.gps_fixed,
+                      size: 48,
+                      color: theme.colorScheme.primary,
+                    ),
                     const SizedBox(height: 16),
-                    Text('You already have a round in progress', style: theme.textTheme.titleMedium, textAlign: TextAlign.center),
+                    Text(
+                      'You already have a round in progress',
+                      style: theme.textTheme.titleMedium,
+                      textAlign: TextAlign.center,
+                    ),
                     const SizedBox(height: 8),
                     Text(
                       'Finish or abandon "${active.name}" before starting a new one.',
                       textAlign: TextAlign.center,
-                      style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
                     ),
                     const SizedBox(height: 20),
                     ElevatedButton(
@@ -151,7 +167,12 @@ class _NewScorecardScreenState extends State<NewScorecardScreen> {
                   const Expanded(child: Divider()),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                    child: Text('or', style: TextStyle(color: theme.colorScheme.onSurfaceVariant)),
+                    child: Text(
+                      'or',
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
                   ),
                   const Expanded(child: Divider()),
                 ],
@@ -162,7 +183,9 @@ class _NewScorecardScreenState extends State<NewScorecardScreen> {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const CustomScorecardScreen()),
+                      MaterialPageRoute(
+                        builder: (context) => const CustomScorecardScreen(),
+                      ),
                     );
                   },
                   borderRadius: BorderRadius.circular(12),
@@ -176,11 +199,16 @@ class _NewScorecardScreenState extends State<NewScorecardScreen> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Build Custom Scorecard', style: theme.textTheme.titleMedium),
+                              Text(
+                                'Build Custom Scorecard',
+                                style: theme.textTheme.titleMedium,
+                              ),
                               const SizedBox(height: 2),
                               Text(
                                 'Set your own ends, arrows, and scoring',
-                                style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
                               ),
                             ],
                           ),
@@ -225,7 +253,9 @@ class _TemplateCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       '${template.ends} ends · ${template.arrowsPerEnd} arrows/end · max ${template.maxScore}',
-                      style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   ],
                 ),

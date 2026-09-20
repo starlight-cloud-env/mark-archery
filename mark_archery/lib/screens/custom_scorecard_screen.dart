@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../main.dart';
 import 'scoring_screen.dart';
 
@@ -58,9 +59,9 @@ class _CustomScorecardScreenState extends State<CustomScorecardScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not save template: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Could not save template: $e')));
       }
     } finally {
       if (mounted) {
@@ -115,7 +116,7 @@ class _CustomScorecardScreenState extends State<CustomScorecardScreen> {
             ),
             const SizedBox(height: 12),
             Card(
-              color: theme.colorScheme.primary.withOpacity(0.08),
+              color: theme.colorScheme.primary.withValues(alpha: 0.08),
               child: Padding(
                 padding: const EdgeInsets.all(14.0),
                 child: Text(
@@ -127,9 +128,12 @@ class _CustomScorecardScreenState extends State<CustomScorecardScreen> {
             const SizedBox(height: 16),
             CheckboxListTile(
               value: _saveAsTemplate,
-              onChanged: (checked) => setState(() => _saveAsTemplate = checked ?? false),
+              onChanged: (checked) =>
+                  setState(() => _saveAsTemplate = checked ?? false),
               title: const Text('Save as a reusable template'),
-              subtitle: const Text('Appears under "Choose a Template" next time'),
+              subtitle: const Text(
+                'Appears under "Choose a Template" next time',
+              ),
               contentPadding: EdgeInsets.zero,
               controlAffinity: ListTileControlAffinity.leading,
             ),
@@ -182,7 +186,11 @@ class _NumberStepper extends StatelessWidget {
             ),
             SizedBox(
               width: 32,
-              child: Text('$value', textAlign: TextAlign.center, style: theme.textTheme.titleMedium),
+              child: Text(
+                '$value',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.titleMedium,
+              ),
             ),
             IconButton(
               icon: const Icon(Icons.add_circle_outline),

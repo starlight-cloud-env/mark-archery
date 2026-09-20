@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+
 import '../main.dart';
 
 class EditProfileScreen extends StatefulWidget {
@@ -31,18 +32,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
     try {
       final userId = supabase.auth.currentUser!.id;
-      await supabase.from('archers').update({
-        'name': _nameController.text.trim(),
-      }).eq('id', userId);
+      await supabase
+          .from('archers')
+          .update({'name': _nameController.text.trim()})
+          .eq('id', userId);
 
       if (mounted) {
-        Navigator.pop(context, true); // true signals "profile changed" to caller
+        Navigator.pop(
+          context,
+          true,
+        ); // true signals "profile changed" to caller
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not save: $e')),
-        );
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Could not save: $e')));
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);

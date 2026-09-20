@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../main.dart';
+import 'forgot_password_screen.dart';
 import 'home_shell.dart';
 import 'signup_screen.dart';
 
@@ -149,6 +150,21 @@ class _AuthScreenState extends State<AuthScreen> {
                         obscureText: true,
                         decoration: const InputDecoration(
                           labelText: 'Password',
+                        ),
+                      ),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const ForgotPasswordScreen(),
+                              ),
+                            );
+                          },
+                          child: const Text('Forgot Password?'),
                         ),
                       ),
                       if (_errorMessage != null) ...[
