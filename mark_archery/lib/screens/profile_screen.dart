@@ -233,14 +233,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     leading: const Icon(Icons.privacy_tip_outlined),
                     title: const Text('Privacy Policy'),
                     trailing: const Icon(Icons.open_in_new, size: 18),
-                    onTap: () => _openLink('https://markarchery.app/privacy'),
+                    onTap: () =>
+                        _openLink('https://markarchery.app/privacy.html'),
                   ),
                   const Divider(height: 1),
                   ListTile(
                     leading: const Icon(Icons.description_outlined),
                     title: const Text('Terms of Service'),
                     trailing: const Icon(Icons.open_in_new, size: 18),
-                    onTap: () => _openLink('https://markarchery.app/terms'),
+                    onTap: () =>
+                        _openLink('https://markarchery.app/terms.html'),
                   ),
                 ],
               ),
