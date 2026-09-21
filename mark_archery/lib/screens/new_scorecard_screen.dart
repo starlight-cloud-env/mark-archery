@@ -1,8 +1,10 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../main.dart';
 import '../models/scorecard.dart';
 import '../models/scorecard_template.dart';
+import '../widgets/grouped_card.dart';
 import 'scoring_screen.dart';
 import 'custom_scorecard_screen.dart';
 
@@ -91,7 +93,7 @@ class _NewScorecardScreenState extends State<NewScorecardScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      Icons.gps_fixed,
+                      CupertinoIcons.scope,
                       size: 48,
                       color: theme.colorScheme.primary,
                     ),
@@ -140,25 +142,29 @@ class _NewScorecardScreenState extends State<NewScorecardScreen> {
             children: [
               Text('Choose a Template', style: theme.textTheme.titleMedium),
               const SizedBox(height: 10),
-              ...templates.map(
-                (template) => Padding(
-                  padding: const EdgeInsets.only(bottom: 10.0),
-                  child: _TemplateCard(
-                    template: template,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ScoringScreen(
-                            scorecardName: template.name,
-                            ends: template.ends,
-                            arrowsPerEnd: template.arrowsPerEnd,
-                            maxScore: template.maxScore,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
+              GroupedCard(
+                child: Column(
+                  children: [
+                    for (var i = 0; i < templates.length; i++) ...[
+                      if (i > 0) const GroupedCardDivider(),
+                      _TemplateRow(
+                        template: templates[i],
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ScoringScreen(
+                                scorecardName: templates[i].name,
+                                ends: templates[i].ends,
+                                arrowsPerEnd: templates[i].arrowsPerEnd,
+                                maxScore: templates[i].maxScore,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
+                  ],
                 ),
               ),
               const SizedBox(height: 20),
@@ -178,7 +184,7 @@ class _NewScorecardScreenState extends State<NewScorecardScreen> {
                 ],
               ),
               const SizedBox(height: 20),
-              Card(
+              GroupedCard(
                 child: InkWell(
                   onTap: () {
                     Navigator.push(
@@ -188,12 +194,14 @@ class _NewScorecardScreenState extends State<NewScorecardScreen> {
                       ),
                     );
                   },
-                  borderRadius: BorderRadius.circular(12),
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Row(
                       children: [
-                        Icon(Icons.tune, color: theme.colorScheme.primary),
+                        Icon(
+                          CupertinoIcons.slider_horizontal_3,
+                          color: theme.colorScheme.primary,
+                        ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Column(
@@ -213,7 +221,7 @@ class _NewScorecardScreenState extends State<NewScorecardScreen> {
                             ],
                           ),
                         ),
-                        const Icon(Icons.chevron_right),
+                        const Icon(CupertinoIcons.chevron_forward),
                       ],
                     ),
                   ),
@@ -227,42 +235,39 @@ class _NewScorecardScreenState extends State<NewScorecardScreen> {
   }
 }
 
-class _TemplateCard extends StatelessWidget {
+class _TemplateRow extends StatelessWidget {
   final ScorecardTemplate template;
   final VoidCallback onTap;
 
-  const _TemplateCard({required this.template, required this.onTap});
+  const _TemplateRow({required this.template, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Card(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(template.name, style: theme.textTheme.titleMedium),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${template.ends} ends · ${template.arrowsPerEnd} arrows/end · max ${template.maxScore}',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(template.name, style: theme.textTheme.titleMedium),
+                  const SizedBox(height: 4),
+                  Text(
+                    '${template.ends} ends · ${template.arrowsPerEnd} arrows/end · max ${template.maxScore}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              const Icon(Icons.chevron_right),
-            ],
-          ),
+            ),
+            const Icon(CupertinoIcons.chevron_forward),
+          ],
         ),
       ),
     );

@@ -61,6 +61,17 @@ class _MyAppState extends State<MyApp> {
       darkTheme: darkTheme,
       themeMode: ThemeMode.system,
       home: const SplashScreen(),
+      // Auth deep links (e.g. Supabase's password-recovery callback) arrive
+      // as an incoming route push. We don't use named routing — navigation
+      // for those is driven by the onAuthStateChange listener above — so
+      // swallow it with a no-op route instead of letting Flutter's default
+      // onUnknownRoute assertion throw.
+      onGenerateRoute: (settings) => PageRouteBuilder(
+        settings: settings,
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            const SizedBox.shrink(),
+        transitionDuration: Duration.zero,
+      ),
     );
   }
 }

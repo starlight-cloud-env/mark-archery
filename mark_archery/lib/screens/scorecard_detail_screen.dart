@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../widgets/grouped_card.dart';
+
 class ScorecardDetailScreen extends StatelessWidget {
   final String scorecardName;
   final String date;
@@ -57,19 +59,24 @@ class ScorecardDetailScreen extends StatelessWidget {
 
           // Read-only ends list
           Expanded(
-            child: ListView.builder(
+            child: ListView(
               padding: const EdgeInsets.all(16.0),
-              itemCount: ends.length,
-              itemBuilder: (context, endIndex) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 10.0),
-                  child: _ReadOnlyEndRow(
-                    endNumber: endIndex + 1,
-                    arrowScores: ends[endIndex],
-                    endTotal: _endTotal(endIndex),
+              children: [
+                GroupedCard(
+                  child: Column(
+                    children: [
+                      for (var i = 0; i < ends.length; i++) ...[
+                        if (i > 0) const GroupedCardDivider(),
+                        _ReadOnlyEndRow(
+                          endNumber: i + 1,
+                          arrowScores: ends[i],
+                          endTotal: _endTotal(i),
+                        ),
+                      ],
+                    ],
                   ),
-                );
-              },
+                ),
+              ],
             ),
           ),
         ],
@@ -93,35 +100,33 @@ class _ReadOnlyEndRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
-        child: Row(
-          children: [
-            SizedBox(
-              width: 28,
-              child: Text('$endNumber', style: theme.textTheme.bodyLarge),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 10.0),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 28,
+            child: Text('$endNumber', style: theme.textTheme.bodyLarge),
+          ),
+          Expanded(
+            child: Wrap(
+              spacing: 6,
+              children: arrowScores.map((score) {
+                return Container(
+                  width: 32,
+                  height: 32,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: theme.colorScheme.primary.withValues(alpha: 0.12),
+                  ),
+                  child: Text('$score', style: theme.textTheme.bodySmall),
+                );
+              }).toList(),
             ),
-            Expanded(
-              child: Wrap(
-                spacing: 6,
-                children: arrowScores.map((score) {
-                  return Container(
-                    width: 32,
-                    height: 32,
-                    alignment: Alignment.center,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: theme.colorScheme.primary.withValues(alpha: 0.12),
-                    ),
-                    child: Text('$score', style: theme.textTheme.bodySmall),
-                  );
-                }).toList(),
-              ),
-            ),
-            Text('$endTotal', style: theme.textTheme.titleMedium),
-          ],
-        ),
+          ),
+          Text('$endTotal', style: theme.textTheme.titleMedium),
+        ],
       ),
     );
   }

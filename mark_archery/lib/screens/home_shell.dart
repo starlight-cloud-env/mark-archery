@@ -1,3 +1,6 @@
+import 'dart:ui';
+
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import 'home_screen.dart';
@@ -6,34 +9,64 @@ import 'profile_screen.dart';
 import 'new_scorecard_screen.dart';
 
 class HomeShell extends StatefulWidget {
-  const HomeShell({super.key});
+  /// Global key so screens deep in the navigation stack (e.g. ScoringScreen)
+  /// can jump back to a specific tab instead of just popping to whatever
+  /// pushed them.
+  static final GlobalKey<HomeShellState> shellKey = GlobalKey<HomeShellState>();
+
+  HomeShell() : super(key: shellKey);
 
   @override
-  State<HomeShell> createState() => _HomeShellState();
+  State<HomeShell> createState() => HomeShellState();
 }
 
-class _HomeShellState extends State<HomeShell> {
+class HomeShellState extends State<HomeShell> {
   int _selectedIndex = 0;
 
-  final List<Widget> _screens = const [
-    HomeScreen(),
-    ScoresScreen(),
-    ProfileScreen(),
+  final GlobalKey<HomeScreenState> _homeKey = GlobalKey<HomeScreenState>();
+  final GlobalKey<ScoresScreenState> _scoresKey =
+      GlobalKey<ScoresScreenState>();
+
+  late final List<Widget> _screens = [
+    HomeScreen(key: _homeKey),
+    ScoresScreen(key: _scoresKey),
+    const ProfileScreen(),
   ];
 
-  final List<String> _titles = const ['Home', 'Scores', 'Profile'];
+  // Each tab screen stays mounted (IndexedStack), so nothing refetches on
+  // its own when the user switches back to it — force that here instead.
+  void _refreshTab(int index) {
+    switch (index) {
+      case 0:
+        _homeKey.currentState?.refresh();
+      case 1:
+        _scoresKey.currentState?.refreshCurrent();
+    }
+  }
 
   void _onTabTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
+    _refreshTab(index);
+  }
+
+  /// Switches to the given tab and refreshes it, used when returning from a
+  /// pushed screen (e.g. after scoring a round).
+  void showTab(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+    _refreshTab(index);
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      appBar: AppBar(title: Text(_titles[_selectedIndex])),
-      body: _screens[_selectedIndex],
+      extendBody: true,
+      body: IndexedStack(index: _selectedIndex, children: _screens),
       floatingActionButton: _selectedIndex == 1
           ? FloatingActionButton(
               onPressed: () {
@@ -44,18 +77,44 @@ class _HomeShellState extends State<HomeShell> {
                   ),
                 );
               },
-              child: const Icon(Icons.add),
+              child: const Icon(CupertinoIcons.add),
             )
           : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: _onTabTapped,
-        destinations: const [
-          NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
-          NavigationDestination(icon: Icon(Icons.gps_fixed), label: 'Scores'),
-          NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
-        ],
+      bottomNavigationBar: ClipRect(
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface.withValues(alpha: 0.75),
+              border: Border(
+                top: BorderSide(color: theme.colorScheme.outlineVariant),
+              ),
+            ),
+            child: NavigationBar(
+              backgroundColor: Colors.transparent,
+              surfaceTintColor: Colors.transparent,
+              selectedIndex: _selectedIndex,
+              onDestinationSelected: _onTabTapped,
+              destinations: const [
+                NavigationDestination(
+                  icon: Icon(CupertinoIcons.house),
+                  selectedIcon: Icon(CupertinoIcons.house_fill),
+                  label: 'Home',
+                ),
+                NavigationDestination(
+                  icon: Icon(CupertinoIcons.scope),
+                  label: 'Scores',
+                ),
+                NavigationDestination(
+                  icon: Icon(CupertinoIcons.person),
+                  selectedIcon: Icon(CupertinoIcons.person_fill),
+                  label: 'Profile',
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

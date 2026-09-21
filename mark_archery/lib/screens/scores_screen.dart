@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../main.dart';
@@ -12,57 +13,80 @@ class ScoresScreen extends StatefulWidget {
   const ScoresScreen({super.key});
 
   @override
-  State<ScoresScreen> createState() => _ScoresScreenState();
+  State<ScoresScreen> createState() => ScoresScreenState();
 }
 
-class _ScoresScreenState extends State<ScoresScreen> {
+class ScoresScreenState extends State<ScoresScreen> {
   ScoresView _selectedView = ScoresView.active;
+
+  final GlobalKey<ActiveScoresViewState> _activeKey =
+      GlobalKey<ActiveScoresViewState>();
+  final GlobalKey<HistoryViewState> _historyKey = GlobalKey<HistoryViewState>();
+
+  /// Refetches whichever of Active/History is currently showing. Public so
+  /// the tab shell can call it when the user switches back to this tab,
+  /// since this screen stays mounted (via IndexedStack) rather than being
+  /// recreated on tab switch.
+  void refreshCurrent() {
+    if (_selectedView == ScoresView.active) {
+      _activeKey.currentState?.refresh();
+    } else {
+      _historyKey.currentState?.refresh();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: SegmentedButton<ScoresView>(
-            segments: const [
-              ButtonSegment(
-                value: ScoresView.active,
-                label: Text('Active'),
-                icon: Icon(Icons.gps_fixed),
+    return Scaffold(
+      body: CustomScrollView(
+        slivers: [
+          const SliverAppBar.large(title: Text('Scores')),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: CupertinoSlidingSegmentedControl<ScoresView>(
+                  groupValue: _selectedView,
+                  children: const {
+                    ScoresView.active: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 20),
+                      child: Text('Active'),
+                    ),
+                    ScoresView.history: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 20),
+                      child: Text('History'),
+                    ),
+                  },
+                  onValueChanged: (value) {
+                    if (value != null) {
+                      setState(() => _selectedView = value);
+                    }
+                  },
+                ),
               ),
-              ButtonSegment(
-                value: ScoresView.history,
-                label: Text('History'),
-                icon: Icon(Icons.history),
-              ),
-            ],
-            selected: {_selectedView},
-            onSelectionChanged: (newSelection) {
-              setState(() {
-                _selectedView = newSelection.first;
-              });
-            },
+            ),
           ),
-        ),
-        Expanded(
-          child: _selectedView == ScoresView.active
-              ? const _ActiveScoresView()
-              : const _HistoryView(),
-        ),
-      ],
+          SliverFillRemaining(
+            hasScrollBody: true,
+            child: _selectedView == ScoresView.active
+                ? _ActiveScoresView(key: _activeKey)
+                : _HistoryView(key: _historyKey),
+          ),
+        ],
+      ),
     );
   }
 }
 
 class _ActiveScoresView extends StatefulWidget {
-  const _ActiveScoresView();
+  const _ActiveScoresView({super.key});
 
   @override
-  State<_ActiveScoresView> createState() => _ActiveScoresViewState();
+  State<_ActiveScoresView> createState() => ActiveScoresViewState();
 }
 
-class _ActiveScoresViewState extends State<_ActiveScoresView> {
+class ActiveScoresViewState extends State<_ActiveScoresView> {
   late Future<List<Scorecard>> _scorecardsFuture;
 
   @override
@@ -83,7 +107,9 @@ class _ActiveScoresViewState extends State<_ActiveScoresView> {
     return response.map((json) => Scorecard.fromJson(json)).toList();
   }
 
-  void _refresh() {
+  /// Public so ScoresScreenState can force a refetch when this tab becomes
+  /// visible again.
+  void refresh() {
     setState(() {
       _scorecardsFuture = _fetchActive();
     });
@@ -112,68 +138,75 @@ class _ActiveScoresViewState extends State<_ActiveScoresView> {
           return const _EmptyActiveState();
         }
 
-        return RefreshIndicator(
-          onRefresh: () async {
-            _refresh();
-            await _scorecardsFuture;
-          },
-          child: ListView.builder(
-            padding: const EdgeInsets.all(16.0),
-            itemCount: rounds.length,
-            itemBuilder: (context, index) {
-              final round = rounds[index];
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 12.0),
-                child: Dismissible(
-                  key: ValueKey(round.id),
-                  direction: DismissDirection.endToStart,
-                  background: Container(
-                    alignment: Alignment.centerRight,
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.error,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(
-                      Icons.delete_outline,
-                      color: Colors.white,
-                    ),
-                  ),
-                  confirmDismiss: (direction) async {
-                    return await showDialog<bool>(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text('Abandon this round?'),
-                        content: Text(
-                          'This will permanently delete "${round.name}" and its progress.',
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context, false),
-                            child: const Text('Cancel'),
-                          ),
-                          TextButton(
-                            onPressed: () => Navigator.pop(context, true),
-                            child: Text(
-                              'Delete',
-                              style: TextStyle(color: theme.colorScheme.error),
-                            ),
-                          ),
-                        ],
+        return CustomScrollView(
+          slivers: [
+            CupertinoSliverRefreshControl(
+              onRefresh: () async {
+                refresh();
+                await _scorecardsFuture;
+              },
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
+              sliver: SliverList.separated(
+                itemCount: rounds.length,
+                separatorBuilder: (context, index) =>
+                    const SizedBox(height: 12),
+                itemBuilder: (context, index) {
+                  final round = rounds[index];
+                  return Dismissible(
+                    key: ValueKey(round.id),
+                    direction: DismissDirection.endToStart,
+                    background: Container(
+                      alignment: Alignment.centerRight,
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.error,
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                    );
-                  },
-                  onDismissed: (direction) async {
-                    await _deleteRound(round.id);
-                  },
-                  child: _ActiveRoundCard(
-                    scorecard: round,
-                    onReturned: _refresh,
-                  ),
-                ),
-              );
-            },
-          ),
+                      child: const Icon(
+                        CupertinoIcons.delete,
+                        color: Colors.white,
+                      ),
+                    ),
+                    confirmDismiss: (direction) async {
+                      return await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Abandon this round?'),
+                          content: Text(
+                            'This will permanently delete "${round.name}" and its progress.',
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text('Cancel'),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              child: Text(
+                                'Delete',
+                                style: TextStyle(
+                                  color: theme.colorScheme.error,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                    onDismissed: (direction) async {
+                      await _deleteRound(round.id);
+                    },
+                    child: _ActiveRoundCard(
+                      scorecard: round,
+                      onReturned: refresh,
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
         );
       },
     );
@@ -218,12 +251,13 @@ class _ActiveRoundCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Icon(Icons.gps_fixed, color: theme.colorScheme.primary),
+                  Icon(CupertinoIcons.scope, color: theme.colorScheme.primary),
                   const SizedBox(width: 8),
                   Text(scorecard.name, style: theme.textTheme.titleMedium),
                   const Spacer(),
                   Icon(
-                    Icons.chevron_right,
+                    CupertinoIcons.chevron_forward,
+                    size: 18,
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ],
@@ -269,7 +303,7 @@ class _EmptyActiveState extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.gps_fixed,
+              CupertinoIcons.scope,
               size: 48,
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -293,7 +327,7 @@ class _EmptyActiveState extends StatelessWidget {
                   ),
                 );
               },
-              icon: const Icon(Icons.add),
+              icon: const Icon(CupertinoIcons.add),
               label: const Text('Start New Scorecard'),
             ),
           ],
@@ -304,13 +338,13 @@ class _EmptyActiveState extends StatelessWidget {
 }
 
 class _HistoryView extends StatefulWidget {
-  const _HistoryView();
+  const _HistoryView({super.key});
 
   @override
-  State<_HistoryView> createState() => _HistoryViewState();
+  State<_HistoryView> createState() => HistoryViewState();
 }
 
-class _HistoryViewState extends State<_HistoryView> {
+class HistoryViewState extends State<_HistoryView> {
   late Future<List<Scorecard>> _scorecardsFuture;
 
   @override
@@ -331,7 +365,9 @@ class _HistoryViewState extends State<_HistoryView> {
     return response.map((json) => Scorecard.fromJson(json)).toList();
   }
 
-  void _refresh() {
+  /// Public so ScoresScreenState can force a refetch when this tab becomes
+  /// visible again.
+  void refresh() {
     setState(() {
       _scorecardsFuture = _fetchHistory();
     });
@@ -367,111 +403,122 @@ class _HistoryViewState extends State<_HistoryView> {
             rounds.map((r) => r.runningTotal).reduce((a, b) => a + b) /
             rounds.length;
 
-        return RefreshIndicator(
-          onRefresh: () async {
-            _refresh();
-            await _scorecardsFuture;
-          },
-          child: ListView(
-            padding: const EdgeInsets.all(16.0),
-            children: [
-              Row(
-                children: [
-                  Expanded(
-                    child: _SummaryStat(
-                      label: 'Best Score',
-                      value: '$bestScore',
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _SummaryStat(
-                      label: 'Average',
-                      value: averageScore.toStringAsFixed(1),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              Text(
-                'All Rounds',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              const SizedBox(height: 8),
-              ...rounds.map(
-                (round) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8.0),
-                  child: Dismissible(
-                    key: ValueKey(round.id),
-                    direction: DismissDirection.endToStart,
-                    background: Container(
-                      alignment: Alignment.centerRight,
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.error,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.delete_outline,
-                        color: Colors.white,
-                      ),
-                    ),
-                    confirmDismiss: (direction) async {
-                      return await showDialog<bool>(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text('Delete this round?'),
-                          content: Text(
-                            'This will permanently delete "${round.name}" from your history.',
+        return CustomScrollView(
+          slivers: [
+            CupertinoSliverRefreshControl(
+              onRefresh: () async {
+                refresh();
+                await _scorecardsFuture;
+              },
+            ),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
+              sliver: SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _SummaryStat(
+                            label: 'Best Score',
+                            value: '$bestScore',
                           ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, false),
-                              child: const Text('Cancel'),
-                            ),
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, true),
-                              child: Text(
-                                'Delete',
-                                style: TextStyle(
-                                  color: theme.colorScheme.error,
-                                ),
-                              ),
-                            ),
-                          ],
                         ),
-                      );
-                    },
-                    onDismissed: (direction) async {
-                      await _deleteRound(round.id);
-                    },
-                    child: _PastRoundTile(
-                      scorecard: round,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ScorecardDetailScreen(
-                              scorecardName: round.name,
-                              date: round.startedAt.toLocal().toString().split(
-                                ' ',
-                              )[0],
-                              totalScore: round.runningTotal,
-                              maxPossible: round.maxPossible,
-                              maxScore: round.maxScore,
-                              ends: round.ends
-                                  .map((e) => e.map((s) => s ?? 0).toList())
-                                  .toList(),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: _SummaryStat(
+                            label: 'Average',
+                            value: averageScore.toStringAsFixed(1),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    Text('All Rounds', style: theme.textTheme.titleMedium),
+                    const SizedBox(height: 8),
+                    ...rounds.map(
+                      (round) => Padding(
+                        padding: const EdgeInsets.only(bottom: 8.0),
+                        child: Dismissible(
+                          key: ValueKey(round.id),
+                          direction: DismissDirection.endToStart,
+                          background: Container(
+                            alignment: Alignment.centerRight,
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.error,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(
+                              CupertinoIcons.delete,
+                              color: Colors.white,
                             ),
                           ),
-                        );
-                      },
+                          confirmDismiss: (direction) async {
+                            return await showDialog<bool>(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text('Delete this round?'),
+                                content: Text(
+                                  'This will permanently delete "${round.name}" from your history.',
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(context, false),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () =>
+                                        Navigator.pop(context, true),
+                                    child: Text(
+                                      'Delete',
+                                      style: TextStyle(
+                                        color: theme.colorScheme.error,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                          onDismissed: (direction) async {
+                            await _deleteRound(round.id);
+                          },
+                          child: _PastRoundTile(
+                            scorecard: round,
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ScorecardDetailScreen(
+                                    scorecardName: round.name,
+                                    date: round.startedAt
+                                        .toLocal()
+                                        .toString()
+                                        .split(' ')[0],
+                                    totalScore: round.runningTotal,
+                                    maxPossible: round.maxPossible,
+                                    maxScore: round.maxScore,
+                                    ends: round.ends
+                                        .map(
+                                          (e) => e.map((s) => s ?? 0).toList(),
+                                        )
+                                        .toList(),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         );
       },
     );
@@ -526,7 +573,7 @@ class _PastRoundTile extends StatelessWidget {
           leading: CircleAvatar(
             backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.12),
             child: Icon(
-              Icons.gps_fixed,
+              CupertinoIcons.scope,
               color: theme.colorScheme.primary,
               size: 20,
             ),
@@ -559,7 +606,7 @@ class _EmptyHistoryState extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.history,
+              CupertinoIcons.time,
               size: 48,
               color: theme.colorScheme.onSurfaceVariant,
             ),

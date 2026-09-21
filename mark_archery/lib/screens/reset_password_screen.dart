@@ -47,7 +47,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       if (mounted) {
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (context) => const HomeShell()),
+          MaterialPageRoute(builder: (context) => HomeShell()),
           (route) => false,
         );
       }

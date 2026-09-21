@@ -1,8 +1,11 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../main.dart';
 import '../models/scorecard.dart';
+import '../widgets/grouped_card.dart';
+import 'home_shell.dart';
 
 class ScoringScreen extends StatefulWidget {
   final String scorecardName;
@@ -127,6 +130,14 @@ class _ScoringScreenState extends State<ScoringScreen> {
     }
   }
 
+  /// Returns to the Scores tab (Active view), regardless of how deep the
+  /// navigation stack is (Home, Scores/Active, or the New/Custom Scorecard
+  /// chain can all lead here).
+  void _goToScoresTab() {
+    HomeShell.shellKey.currentState?.showTab(1);
+    Navigator.of(context).popUntil((route) => route.isFirst);
+  }
+
   Future<void> _handleFinish() async {
     setState(() {
       _isSaving = true;
@@ -139,7 +150,7 @@ class _ScoringScreenState extends State<ScoringScreen> {
           .eq('id', _scorecard.id);
 
       if (mounted) {
-        Navigator.pop(context);
+        _goToScoresTab();
       }
     } catch (e) {
       if (mounted) {
@@ -160,91 +171,104 @@ class _ScoringScreenState extends State<ScoringScreen> {
     final theme = Theme.of(context);
     final isComplete = _scorecard.nextEmptySlot == null;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(_scorecard.name),
-        actions: [
-          if (_hasSaveError)
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) _goToScoresTab();
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(_scorecard.name),
+          actions: [
+            if (_hasSaveError)
+              IconButton(
+                icon: Icon(
+                  CupertinoIcons.cloud_bolt,
+                  color: theme.colorScheme.error,
+                ),
+                onPressed: _persistEnds,
+                tooltip: 'Not saved — tap to retry',
+              ),
             IconButton(
-              icon: Icon(Icons.cloud_off, color: theme.colorScheme.error),
-              onPressed: _persistEnds,
-              tooltip: 'Not saved — tap to retry',
-            ),
-          IconButton(
-            icon: const Icon(Icons.undo),
-            onPressed: () {
-              HapticFeedback.mediumImpact();
-              _undoLast();
-            },
-            tooltip: 'Undo last arrow',
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          Container(
-            width: double.infinity,
-            color: theme.colorScheme.primary.withValues(alpha: 0.08),
-            padding: const EdgeInsets.symmetric(vertical: 12.0),
-            child: Column(
-              children: [
-                Text(
-                  '${_scorecard.runningTotal}',
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                Text(
-                  'Total',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.all(16.0),
-              itemCount: _scorecard.totalEnds,
-              itemBuilder: (context, endIndex) {
-                final isCurrentEnd = _scorecard.nextEmptySlot?.end == endIndex;
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 10.0),
-                  child: _EndRow(
-                    endNumber: endIndex + 1,
-                    arrowScores: _scorecard.ends[endIndex],
-                    endTotal: _scorecard.endTotal(endIndex),
-                    isCurrentEnd: isCurrentEnd,
-                  ),
-                );
+              icon: const Icon(CupertinoIcons.arrow_uturn_left),
+              onPressed: () {
+                HapticFeedback.mediumImpact();
+                _undoLast();
               },
+              tooltip: 'Undo last arrow',
             ),
-          ),
-          if (!isComplete)
-            _ScoreInputPad(
-              maxScore: _scorecard.maxScore,
-              onScoreSelected: _enterScore,
-            )
-          else
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: _isSaving ? null : _handleFinish,
-                  child: _isSaving
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text('Finish & Save'),
-                ),
+          ],
+        ),
+        body: Column(
+          children: [
+            Container(
+              width: double.infinity,
+              color: theme.colorScheme.primary.withValues(alpha: 0.08),
+              padding: const EdgeInsets.symmetric(vertical: 12.0),
+              child: Column(
+                children: [
+                  Text(
+                    '${_scorecard.runningTotal}',
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  Text(
+                    'Total',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
               ),
             ),
-        ],
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.all(16.0),
+                children: [
+                  GroupedCard(
+                    child: Column(
+                      children: [
+                        for (var i = 0; i < _scorecard.totalEnds; i++) ...[
+                          if (i > 0) const GroupedCardDivider(),
+                          _EndRow(
+                            endNumber: i + 1,
+                            arrowScores: _scorecard.ends[i],
+                            endTotal: _scorecard.endTotal(i),
+                            isCurrentEnd: _scorecard.nextEmptySlot?.end == i,
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (!isComplete)
+              _ScoreInputPad(
+                maxScore: _scorecard.maxScore,
+                onScoreSelected: _enterScore,
+              )
+            else
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _isSaving ? null : _handleFinish,
+                    child: _isSaving
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text('Finish & Save'),
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -267,7 +291,7 @@ class _EndRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Card(
+    return Container(
       color: isCurrentEnd
           ? theme.colorScheme.primary.withValues(alpha: 0.08)
           : null,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../main.dart';
+import '../widgets/grouped_card.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -76,14 +77,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           : ListView(
               padding: const EdgeInsets.all(16.0),
               children: [
-                SwitchListTile(
-                  value: _enabled!,
-                  onChanged: _isSaving ? null : _togglePreference,
-                  title: const Text('Enable Notifications'),
-                  subtitle: const Text(
-                    'Reminders and updates about your rounds',
+                GroupedCard(
+                  child: SwitchListTile(
+                    value: _enabled!,
+                    onChanged: _isSaving ? null : _togglePreference,
+                    title: const Text('Enable Notifications'),
+                    subtitle: const Text(
+                      'Reminders and updates about your rounds',
+                    ),
                   ),
-                  contentPadding: EdgeInsets.zero,
                 ),
               ],
             ),

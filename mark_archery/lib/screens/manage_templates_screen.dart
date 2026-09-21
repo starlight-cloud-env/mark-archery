@@ -1,7 +1,9 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../main.dart';
 import '../models/scorecard_template.dart';
+import '../widgets/grouped_card.dart';
 
 class ManageTemplatesScreen extends StatefulWidget {
   const ManageTemplatesScreen({super.key});
@@ -79,27 +81,32 @@ class _ManageTemplatesScreenState extends State<ManageTemplatesScreen> {
             );
           }
 
-          return ListView.builder(
+          return ListView(
             padding: const EdgeInsets.all(16.0),
-            itemCount: templates.length,
-            itemBuilder: (context, index) {
-              final template = templates[index];
-              return Card(
-                child: ListTile(
-                  title: Text(template.name),
-                  subtitle: Text(
-                    '${template.ends} ends · ${template.arrowsPerEnd} arrows/end',
-                  ),
-                  trailing: IconButton(
-                    icon: Icon(
-                      Icons.delete_outline,
-                      color: theme.colorScheme.error,
-                    ),
-                    onPressed: () => _deleteTemplate(template.id),
-                  ),
+            children: [
+              GroupedCard(
+                child: Column(
+                  children: [
+                    for (var i = 0; i < templates.length; i++) ...[
+                      if (i > 0) const GroupedCardDivider(),
+                      ListTile(
+                        title: Text(templates[i].name),
+                        subtitle: Text(
+                          '${templates[i].ends} ends · ${templates[i].arrowsPerEnd} arrows/end',
+                        ),
+                        trailing: IconButton(
+                          icon: Icon(
+                            CupertinoIcons.delete,
+                            color: theme.colorScheme.error,
+                          ),
+                          onPressed: () => _deleteTemplate(templates[i].id),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
-              );
-            },
+              ),
+            ],
           );
         },
       ),

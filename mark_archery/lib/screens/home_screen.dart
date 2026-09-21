@@ -1,7 +1,9 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../main.dart';
 import '../models/scorecard.dart';
+import '../widgets/grouped_card.dart';
 import 'new_scorecard_screen.dart';
 import 'scoring_screen.dart';
 
@@ -9,7 +11,7 @@ class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<HomeScreen> createState() => HomeScreenState();
 }
 
 class _HomeDashboardData {
@@ -26,7 +28,7 @@ class _HomeDashboardData {
   });
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class HomeScreenState extends State<HomeScreen> {
   late Future<_HomeDashboardData> _dashboardFuture;
 
   @override
@@ -35,7 +37,10 @@ class _HomeScreenState extends State<HomeScreen> {
     _dashboardFuture = _fetchDashboard();
   }
 
-  void _refresh() {
+  /// Refetches the dashboard. Public so the tab shell can force a refresh
+  /// when the user switches back to this tab, since this screen stays
+  /// mounted (via IndexedStack) rather than being recreated on tab switch.
+  void refresh() {
     setState(() {
       _dashboardFuture = _fetchDashboard();
     });
@@ -90,121 +95,168 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return FutureBuilder<_HomeDashboardData>(
-      future: _dashboardFuture,
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        }
+    return Scaffold(
+      body: FutureBuilder<_HomeDashboardData>(
+        future: _dashboardFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
 
-        if (snapshot.hasError) {
-          return Center(
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: Text(
-                'Could not load dashboard: ${snapshot.error}',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: theme.colorScheme.error),
+          if (snapshot.hasError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Text(
+                  'Could not load dashboard: ${snapshot.error}',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: theme.colorScheme.error),
+                ),
               ),
-            ),
-          );
-        }
+            );
+          }
 
-        final data = snapshot.data!;
+          final data = snapshot.data!;
 
-        return RefreshIndicator(
-          onRefresh: () async {
-            _refresh();
-            await _dashboardFuture;
-          },
-          child: ListView(
-            padding: const EdgeInsets.all(16.0),
-            children: [
-              Text('Welcome back', style: theme.textTheme.headlineSmall),
-              const SizedBox(height: 24),
-
-              if (data.activeRound != null)
-                _ContinueRoundCard(
-                  scorecard: data.activeRound!,
-                  onTap: () async {
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => ScoringScreen(
-                          scorecardName: data.activeRound!.name,
-                          ends: data.activeRound!.totalEnds,
-                          arrowsPerEnd: data.activeRound!.arrowsPerEnd,
-                          maxScore: data.activeRound!.maxScore,
-                          existingScorecard: data.activeRound!,
+          return CustomScrollView(
+            slivers: [
+              const SliverAppBar.large(title: Text('Home')),
+              CupertinoSliverRefreshControl(
+                onRefresh: () async {
+                  refresh();
+                  await _dashboardFuture;
+                },
+              ),
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                sliver: SliverToBoxAdapter(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Welcome back',
+                        style: theme.textTheme.bodyLarge?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
-                    );
-                    _refresh();
-                  },
-                )
-              else
-                ElevatedButton.icon(
-                  onPressed: () async {
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const NewScorecardScreen(),
+                      const SizedBox(height: 16),
+
+                      if (data.activeRound != null)
+                        _ContinueRoundCard(
+                          scorecard: data.activeRound!,
+                          onTap: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ScoringScreen(
+                                  scorecardName: data.activeRound!.name,
+                                  ends: data.activeRound!.totalEnds,
+                                  arrowsPerEnd: data.activeRound!.arrowsPerEnd,
+                                  maxScore: data.activeRound!.maxScore,
+                                  existingScorecard: data.activeRound!,
+                                ),
+                              ),
+                            );
+                            refresh();
+                          },
+                        )
+                      else
+                        ElevatedButton.icon(
+                          onPressed: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const NewScorecardScreen(),
+                              ),
+                            );
+                            refresh();
+                          },
+                          icon: const Icon(CupertinoIcons.add),
+                          label: const Text('Start New Scorecard'),
+                        ),
+                      const SizedBox(height: 28),
+
+                      Text('Your Stats', style: theme.textTheme.titleMedium),
+                      const SizedBox(height: 10),
+                      GroupedCard(
+                        child: IntrinsicHeight(
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: _StatCell(
+                                  label: 'Best Score',
+                                  value: '${data.bestScore}',
+                                  icon: CupertinoIcons.star_fill,
+                                ),
+                              ),
+                              VerticalDivider(
+                                width: 1,
+                                color: theme.colorScheme.outlineVariant,
+                              ),
+                              Expanded(
+                                child: _StatCell(
+                                  label: 'This Month',
+                                  value: '${data.roundsThisMonth} rounds',
+                                  icon: CupertinoIcons.calendar,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                    );
-                    _refresh();
-                  },
-                  icon: const Icon(Icons.add),
-                  label: const Text('Start New Scorecard'),
-                ),
-              const SizedBox(height: 28),
+                      const SizedBox(height: 28),
 
-              Text('Your Stats', style: theme.textTheme.titleMedium),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: _StatCard(
-                      label: 'Best Score',
-                      value: '${data.bestScore}',
-                      icon: Icons.emoji_events,
-                    ),
+                      Text(
+                        'Recent Activity',
+                        style: theme.textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 10),
+                      if (data.recentCompleted.isEmpty)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12.0),
+                          child: Text(
+                            'No completed rounds yet.',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        )
+                      else
+                        GroupedCard(
+                          child: Column(
+                            children: [
+                              for (
+                                var i = 0;
+                                i < data.recentCompleted.length;
+                                i++
+                              ) ...[
+                                if (i > 0)
+                                  Divider(
+                                    height: 1,
+                                    color: theme.colorScheme.outlineVariant,
+                                  ),
+                                _RecentScoreTile(
+                                  date: data.recentCompleted[i].startedAt
+                                      .toLocal()
+                                      .toString()
+                                      .split(' ')[0],
+                                  type: data.recentCompleted[i].name,
+                                  score:
+                                      '${data.recentCompleted[i].runningTotal}',
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                    ],
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _StatCard(
-                      label: 'This Month',
-                      value: '${data.roundsThisMonth} rounds',
-                      icon: Icons.calendar_today,
-                    ),
-                  ),
-                ],
+                ),
               ),
-              const SizedBox(height: 28),
-
-              Text('Recent Activity', style: theme.textTheme.titleMedium),
-              const SizedBox(height: 8),
-              if (data.recentCompleted.isEmpty)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12.0),
-                  child: Text(
-                    'No completed rounds yet.',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                )
-              else
-                ...data.recentCompleted.map(
-                  (round) => _RecentScoreTile(
-                    date: round.startedAt.toLocal().toString().split(' ')[0],
-                    type: round.name,
-                    score: '${round.runningTotal}',
-                  ),
-                ),
             ],
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }
@@ -221,11 +273,9 @@ class _ContinueRoundCard extends StatelessWidget {
     final endsDone = scorecard.nextEmptySlot?.end ?? scorecard.totalEnds;
     final progress = endsDone / scorecard.totalEnds;
 
-    return Card(
-      color: theme.colorScheme.primary,
+    return GroupedCard(
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Column(
@@ -233,23 +283,22 @@ class _ContinueRoundCard extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Icon(Icons.gps_fixed, color: theme.colorScheme.onPrimary),
+                  Icon(CupertinoIcons.scope, color: theme.colorScheme.primary),
                   const SizedBox(width: 8),
-                  Text(
-                    'Continue Scoring',
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: theme.colorScheme.onPrimary,
-                    ),
-                  ),
+                  Text('Continue Scoring', style: theme.textTheme.titleMedium),
                   const Spacer(),
-                  Icon(Icons.chevron_right, color: theme.colorScheme.onPrimary),
+                  Icon(
+                    CupertinoIcons.chevron_forward,
+                    size: 18,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                 ],
               ),
               const SizedBox(height: 4),
               Text(
                 '${scorecard.name} · End ${endsDone + 1} of ${scorecard.totalEnds}',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onPrimary.withValues(alpha: 0.85),
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
               const SizedBox(height: 12),
@@ -257,11 +306,9 @@ class _ContinueRoundCard extends StatelessWidget {
                 borderRadius: BorderRadius.circular(4),
                 child: LinearProgressIndicator(
                   value: progress,
-                  minHeight: 6,
-                  backgroundColor: theme.colorScheme.onPrimary.withValues(
-                    alpha: 0.2,
-                  ),
-                  color: theme.colorScheme.onPrimary,
+                  minHeight: 5,
+                  backgroundColor: theme.colorScheme.outlineVariant,
+                  color: theme.colorScheme.primary,
                 ),
               ),
             ],
@@ -272,12 +319,12 @@ class _ContinueRoundCard extends StatelessWidget {
   }
 }
 
-class _StatCard extends StatelessWidget {
+class _StatCell extends StatelessWidget {
   final String label;
   final String value;
   final IconData icon;
 
-  const _StatCard({
+  const _StatCell({
     required this.label,
     required this.value,
     required this.icon,
@@ -287,18 +334,16 @@ class _StatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Icon(icon, color: theme.colorScheme.primary),
-            const SizedBox(height: 8),
-            Text(value, style: theme.textTheme.titleLarge),
-            Text(label, style: theme.textTheme.bodySmall),
-          ],
-        ),
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: theme.colorScheme.primary, size: 20),
+          const SizedBox(height: 8),
+          Text(value, style: theme.textTheme.titleLarge),
+          Text(label, style: theme.textTheme.bodySmall),
+        ],
       ),
     );
   }
@@ -317,12 +362,27 @@ class _RecentScoreTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: const Icon(Icons.circle_outlined),
-      title: Text(type),
-      subtitle: Text(date),
-      trailing: Text(score, style: Theme.of(context).textTheme.titleMedium),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(type),
+                Text(
+                  date,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Text(score, style: Theme.of(context).textTheme.titleMedium),
+        ],
+      ),
     );
   }
 }

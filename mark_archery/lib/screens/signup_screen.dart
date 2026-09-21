@@ -104,7 +104,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       if (mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const HomeShell()),
+          MaterialPageRoute(builder: (context) => HomeShell()),
         );
       }
     } catch (e) {

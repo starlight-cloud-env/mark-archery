@@ -1,7 +1,9 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../main.dart';
+import '../widgets/grouped_card.dart';
 import 'splash_screen.dart';
 import 'edit_profile_screen.dart';
 import 'change_password_screen.dart';
@@ -86,6 +88,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    return Scaffold(body: _buildBody(context, theme));
+  }
+
+  Widget _buildBody(BuildContext context, ThemeData theme) {
     return FutureBuilder<Map<String, dynamic>>(
       future: _archerFuture,
       builder: (context, snapshot) {
@@ -110,152 +116,180 @@ class _ProfileScreenState extends State<ProfileScreen> {
         final name = archer['name'] as String;
         final email = archer['email'] as String;
 
-        return ListView(
-          padding: const EdgeInsets.all(16.0),
-          children: [
-            Row(
-              children: [
-                CircleAvatar(
-                  radius: 32,
-                  backgroundColor: theme.colorScheme.primary.withValues(
-                    alpha: 0.15,
-                  ),
-                  child: Text(
-                    name.isNotEmpty ? name[0].toUpperCase() : '?',
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      color: theme.colorScheme.primary,
+        return CustomScrollView(
+          slivers: [
+            const SliverAppBar.large(title: Text('Profile')),
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+              sliver: SliverToBoxAdapter(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 32,
+                          backgroundColor: theme.colorScheme.primary.withValues(
+                            alpha: 0.15,
+                          ),
+                          child: Text(
+                            name.isNotEmpty ? name[0].toUpperCase() : '?',
+                            style: theme.textTheme.headlineSmall?.copyWith(
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(name, style: theme.textTheme.titleLarge),
+                              Text(
+                                email,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(name, style: theme.textTheme.titleLarge),
-                      Text(
-                        email,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
+                    const SizedBox(height: 28),
+
+                    Text('Account', style: theme.textTheme.titleMedium),
+                    const SizedBox(height: 8),
+                    GroupedCard(
+                      child: Column(
+                        children: [
+                          ListTile(
+                            leading: const Icon(CupertinoIcons.pencil),
+                            title: const Text('Edit Profile'),
+                            trailing: const Icon(
+                              CupertinoIcons.chevron_forward,
+                            ),
+                            onTap: () async {
+                              final changed = await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      EditProfileScreen(currentName: name),
+                                ),
+                              );
+                              if (changed == true) {
+                                _refresh();
+                              }
+                            },
+                          ),
+                          const GroupedCardDivider(),
+                          ListTile(
+                            leading: const Icon(CupertinoIcons.lock),
+                            title: const Text('Change Password'),
+                            trailing: const Icon(
+                              CupertinoIcons.chevron_forward,
+                            ),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const ChangePasswordScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    Text('Preferences', style: theme.textTheme.titleMedium),
+                    const SizedBox(height: 8),
+                    GroupedCard(
+                      child: Column(
+                        children: [
+                          ListTile(
+                            leading: const Icon(CupertinoIcons.square_list),
+                            title: const Text('Default Scoring Templates'),
+                            trailing: const Icon(
+                              CupertinoIcons.chevron_forward,
+                            ),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const ManageTemplatesScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          const GroupedCardDivider(),
+                          ListTile(
+                            leading: const Icon(CupertinoIcons.bell),
+                            title: const Text('Notifications'),
+                            trailing: const Icon(
+                              CupertinoIcons.chevron_forward,
+                            ),
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const NotificationsScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    Text('Legal', style: theme.textTheme.titleMedium),
+                    const SizedBox(height: 8),
+                    GroupedCard(
+                      child: Column(
+                        children: [
+                          ListTile(
+                            leading: const Icon(CupertinoIcons.shield),
+                            title: const Text('Privacy Policy'),
+                            trailing: const Icon(
+                              CupertinoIcons.arrow_up_right_square,
+                              size: 18,
+                            ),
+                            onTap: () => _openLink(
+                              'https://markarchery.app/privacy.html',
+                            ),
+                          ),
+                          const GroupedCardDivider(),
+                          ListTile(
+                            leading: const Icon(CupertinoIcons.doc_text),
+                            title: const Text('Terms of Service'),
+                            trailing: const Icon(
+                              CupertinoIcons.arrow_up_right_square,
+                              size: 18,
+                            ),
+                            onTap: () =>
+                                _openLink('https://markarchery.app/terms.html'),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+
+                    OutlinedButton.icon(
+                      onPressed: () => _handleSignOut(context),
+                      icon: const Icon(CupertinoIcons.square_arrow_right),
+                      label: const Text('Sign Out'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: theme.colorScheme.error,
+                        side: BorderSide(color: theme.colorScheme.error),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            const SizedBox(height: 28),
-
-            Text('Account', style: theme.textTheme.titleMedium),
-            const SizedBox(height: 8),
-            Card(
-              child: Column(
-                children: [
-                  ListTile(
-                    leading: const Icon(Icons.edit_outlined),
-                    title: const Text('Edit Profile'),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () async {
-                      final changed = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              EditProfileScreen(currentName: name),
-                        ),
-                      );
-                      if (changed == true) {
-                        _refresh();
-                      }
-                    },
-                  ),
-                  const Divider(height: 1),
-                  ListTile(
-                    leading: const Icon(Icons.lock_outline),
-                    title: const Text('Change Password'),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ChangePasswordScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            Text('Preferences', style: theme.textTheme.titleMedium),
-            const SizedBox(height: 8),
-            Card(
-              child: Column(
-                children: [
-                  ListTile(
-                    leading: const Icon(Icons.straighten_outlined),
-                    title: const Text('Default Scoring Templates'),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ManageTemplatesScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  const Divider(height: 1),
-                  ListTile(
-                    leading: const Icon(Icons.notifications_outlined),
-                    title: const Text('Notifications'),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const NotificationsScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-
-            Text('Legal', style: theme.textTheme.titleMedium),
-            const SizedBox(height: 8),
-            Card(
-              child: Column(
-                children: [
-                  ListTile(
-                    leading: const Icon(Icons.privacy_tip_outlined),
-                    title: const Text('Privacy Policy'),
-                    trailing: const Icon(Icons.open_in_new, size: 18),
-                    onTap: () =>
-                        _openLink('https://markarchery.app/privacy.html'),
-                  ),
-                  const Divider(height: 1),
-                  ListTile(
-                    leading: const Icon(Icons.description_outlined),
-                    title: const Text('Terms of Service'),
-                    trailing: const Icon(Icons.open_in_new, size: 18),
-                    onTap: () =>
-                        _openLink('https://markarchery.app/terms.html'),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 28),
-
-            OutlinedButton.icon(
-              onPressed: () => _handleSignOut(context),
-              icon: const Icon(Icons.logout),
-              label: const Text('Sign Out'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: theme.colorScheme.error,
-                side: BorderSide(color: theme.colorScheme.error),
               ),
             ),
           ],

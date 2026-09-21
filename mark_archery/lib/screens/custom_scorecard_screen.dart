@@ -1,6 +1,8 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../main.dart';
+import '../widgets/grouped_card.dart';
 import 'scoring_screen.dart';
 
 class CustomScorecardScreen extends StatefulWidget {
@@ -98,44 +100,58 @@ class _CustomScorecardScreenState extends State<CustomScorecardScreen> {
             ),
             const SizedBox(height: 28),
             Text('Round Structure', style: theme.textTheme.titleMedium),
-            const SizedBox(height: 12),
-            _NumberStepper(
-              label: 'Ends',
-              value: _ends,
-              min: 1,
-              max: 20,
-              onChanged: (newValue) => setState(() => _ends = newValue),
-            ),
-            const SizedBox(height: 12),
-            _NumberStepper(
-              label: 'Arrows per End',
-              value: _arrowsPerEnd,
-              min: 1,
-              max: 12,
-              onChanged: (newValue) => setState(() => _arrowsPerEnd = newValue),
-            ),
-            const SizedBox(height: 12),
-            Card(
-              color: theme.colorScheme.primary.withValues(alpha: 0.08),
-              child: Padding(
-                padding: const EdgeInsets.all(14.0),
-                child: Text(
-                  'Total arrows: ${_ends * _arrowsPerEnd}',
-                  style: theme.textTheme.bodyMedium,
-                ),
+            const SizedBox(height: 10),
+            GroupedCard(
+              child: Column(
+                children: [
+                  _NumberStepper(
+                    label: 'Ends',
+                    value: _ends,
+                    min: 1,
+                    max: 20,
+                    onChanged: (newValue) => setState(() => _ends = newValue),
+                  ),
+                  const GroupedCardDivider(),
+                  _NumberStepper(
+                    label: 'Arrows per End',
+                    value: _arrowsPerEnd,
+                    min: 1,
+                    max: 12,
+                    onChanged: (newValue) =>
+                        setState(() => _arrowsPerEnd = newValue),
+                  ),
+                  const GroupedCardDivider(),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 14.0,
+                    ),
+                    child: Row(
+                      children: [
+                        Text('Total arrows', style: theme.textTheme.bodyLarge),
+                        const Spacer(),
+                        Text(
+                          '${_ends * _arrowsPerEnd}',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const GroupedCardDivider(),
+                  CheckboxListTile(
+                    value: _saveAsTemplate,
+                    onChanged: (checked) =>
+                        setState(() => _saveAsTemplate = checked ?? false),
+                    title: const Text('Save as a reusable template'),
+                    subtitle: const Text(
+                      'Appears under "Choose a Template" next time',
+                    ),
+                    controlAffinity: ListTileControlAffinity.leading,
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 16),
-            CheckboxListTile(
-              value: _saveAsTemplate,
-              onChanged: (checked) =>
-                  setState(() => _saveAsTemplate = checked ?? false),
-              title: const Text('Save as a reusable template'),
-              subtitle: const Text(
-                'Appears under "Choose a Template" next time',
-              ),
-              contentPadding: EdgeInsets.zero,
-              controlAffinity: ListTileControlAffinity.leading,
             ),
             const SizedBox(height: 20),
             ElevatedButton(
@@ -174,30 +190,28 @@ class _NumberStepper extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-        child: Row(
-          children: [
-            Expanded(child: Text(label, style: theme.textTheme.bodyLarge)),
-            IconButton(
-              icon: const Icon(Icons.remove_circle_outline),
-              onPressed: value > min ? () => onChanged(value - 1) : null,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+      child: Row(
+        children: [
+          Expanded(child: Text(label, style: theme.textTheme.bodyLarge)),
+          IconButton(
+            icon: const Icon(CupertinoIcons.minus_circle),
+            onPressed: value > min ? () => onChanged(value - 1) : null,
+          ),
+          SizedBox(
+            width: 32,
+            child: Text(
+              '$value',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.titleMedium,
             ),
-            SizedBox(
-              width: 32,
-              child: Text(
-                '$value',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.titleMedium,
-              ),
-            ),
-            IconButton(
-              icon: const Icon(Icons.add_circle_outline),
-              onPressed: value < max ? () => onChanged(value + 1) : null,
-            ),
-          ],
-        ),
+          ),
+          IconButton(
+            icon: const Icon(CupertinoIcons.add_circled),
+            onPressed: value < max ? () => onChanged(value + 1) : null,
+          ),
+        ],
       ),
     );
   }
