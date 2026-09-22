@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../main.dart';
+import '../widgets/loading_elevated_button.dart';
 import 'home_shell.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
@@ -71,7 +72,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
       ),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(22.0),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -105,15 +106,10 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 ),
               ],
               const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: _isSaving ? null : _handleSetNewPassword,
-                child: _isSaving
-                    ? const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Text('Update Password'),
+              LoadingElevatedButton(
+                isLoading: _isSaving,
+                onPressed: _handleSetNewPassword,
+                label: 'Update Password',
               ),
             ],
           ),

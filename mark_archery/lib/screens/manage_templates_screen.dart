@@ -55,7 +55,7 @@ class _ManageTemplatesScreenState extends State<ManageTemplatesScreen> {
           if (snapshot.hasError) {
             return Center(
               child: Padding(
-                padding: const EdgeInsets.all(24.0),
+                padding: const EdgeInsets.all(22.0),
                 child: Text(
                   'Could not load templates: ${snapshot.error}',
                   textAlign: TextAlign.center,

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../main.dart';
+import '../widgets/loading_elevated_button.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -65,7 +66,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
       appBar: AppBar(title: const Text('Reset Password')),
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(22.0),
           child: _sent
               ? Center(
                   child: Column(
@@ -125,15 +126,10 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       ),
                     ],
                     const SizedBox(height: 24),
-                    ElevatedButton(
-                      onPressed: _isSending ? null : _handleSendResetEmail,
-                      child: _isSending
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Text('Send Reset Link'),
+                    LoadingElevatedButton(
+                      isLoading: _isSending,
+                      onPressed: _handleSendResetEmail,
+                      label: 'Send Reset Link',
                     ),
                   ],
                 ),

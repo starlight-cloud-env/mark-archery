@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../main.dart';
 import '../widgets/grouped_card.dart';
+import '../widgets/loading_elevated_button.dart';
 import 'scoring_screen.dart';
 
 class CustomScorecardScreen extends StatefulWidget {
@@ -154,15 +155,10 @@ class _CustomScorecardScreenState extends State<CustomScorecardScreen> {
               ),
             ),
             const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _isSubmitting ? null : _handleStart,
-              child: _isSubmitting
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Start Scoring'),
+            LoadingElevatedButton(
+              isLoading: _isSubmitting,
+              onPressed: _handleStart,
+              label: 'Start Scoring',
             ),
           ],
         ),

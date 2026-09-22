@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import '../main.dart';
 import '../models/scorecard.dart';
 import '../widgets/grouped_card.dart';
+import '../widgets/ios_tab_bar.dart';
+import '../widgets/round_progress_bar.dart';
 import 'new_scorecard_screen.dart';
 import 'scoring_screen.dart';
 
@@ -106,7 +108,7 @@ class HomeScreenState extends State<HomeScreen> {
           if (snapshot.hasError) {
             return Center(
               child: Padding(
-                padding: const EdgeInsets.all(24.0),
+                padding: const EdgeInsets.all(22.0),
                 child: Text(
                   'Could not load dashboard: ${snapshot.error}',
                   textAlign: TextAlign.center,
@@ -128,7 +130,12 @@ class HomeScreenState extends State<HomeScreen> {
                 },
               ),
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                padding: EdgeInsets.fromLTRB(
+                  16,
+                  0,
+                  16,
+                  MediaQuery.of(context).padding.bottom + iosTabBarHeight + 16,
+                ),
                 sliver: SliverToBoxAdapter(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -302,15 +309,7 @@ class _ContinueRoundCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: LinearProgressIndicator(
-                  value: progress,
-                  minHeight: 5,
-                  backgroundColor: theme.colorScheme.outlineVariant,
-                  color: theme.colorScheme.primary,
-                ),
-              ),
+              RoundProgressBar(progress: progress),
             ],
           ),
         ),

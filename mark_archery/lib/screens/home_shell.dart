@@ -1,12 +1,10 @@
-import 'dart:ui';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
+import '../widgets/ios_tab_bar.dart';
 import 'home_screen.dart';
 import 'scores_screen.dart';
 import 'profile_screen.dart';
-import 'new_scorecard_screen.dart';
 
 class HomeShell extends StatefulWidget {
   /// Global key so screens deep in the navigation stack (e.g. ScoringScreen)
@@ -62,59 +60,25 @@ class HomeShellState extends State<HomeShell> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
       extendBody: true,
       body: IndexedStack(index: _selectedIndex, children: _screens),
-      floatingActionButton: _selectedIndex == 1
-          ? FloatingActionButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const NewScorecardScreen(),
-                  ),
-                );
-              },
-              child: const Icon(CupertinoIcons.add),
-            )
-          : null,
-      floatingActionButtonLocation: FloatingActionButtonLocation.startFloat,
-      bottomNavigationBar: ClipRect(
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-          child: DecoratedBox(
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface.withValues(alpha: 0.75),
-              border: Border(
-                top: BorderSide(color: theme.colorScheme.outlineVariant),
-              ),
-            ),
-            child: NavigationBar(
-              backgroundColor: Colors.transparent,
-              surfaceTintColor: Colors.transparent,
-              selectedIndex: _selectedIndex,
-              onDestinationSelected: _onTabTapped,
-              destinations: const [
-                NavigationDestination(
-                  icon: Icon(CupertinoIcons.house),
-                  selectedIcon: Icon(CupertinoIcons.house_fill),
-                  label: 'Home',
-                ),
-                NavigationDestination(
-                  icon: Icon(CupertinoIcons.scope),
-                  label: 'Scores',
-                ),
-                NavigationDestination(
-                  icon: Icon(CupertinoIcons.person),
-                  selectedIcon: Icon(CupertinoIcons.person_fill),
-                  label: 'Profile',
-                ),
-              ],
-            ),
+      bottomNavigationBar: IosTabBar(
+        selectedIndex: _selectedIndex,
+        onDestinationSelected: _onTabTapped,
+        destinations: const [
+          IosTabDestination(
+            icon: CupertinoIcons.house,
+            selectedIcon: CupertinoIcons.house_fill,
+            label: 'Home',
           ),
-        ),
+          IosTabDestination(icon: CupertinoIcons.scope, label: 'Scores'),
+          IosTabDestination(
+            icon: CupertinoIcons.person,
+            selectedIcon: CupertinoIcons.person_fill,
+            label: 'Profile',
+          ),
+        ],
       ),
     );
   }

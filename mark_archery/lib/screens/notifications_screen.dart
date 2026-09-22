@@ -64,7 +64,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       body: _loadError != null
           ? Center(
               child: Padding(
-                padding: const EdgeInsets.all(24.0),
+                padding: const EdgeInsets.all(22.0),
                 child: Text(
                   _loadError!,
                   textAlign: TextAlign.center,

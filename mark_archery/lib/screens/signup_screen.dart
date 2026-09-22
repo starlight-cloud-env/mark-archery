@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import '../main.dart';
+import '../widgets/loading_elevated_button.dart';
 import 'home_shell.dart';
 
 class SignUpScreen extends StatefulWidget {
@@ -142,7 +143,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               constraints: BoxConstraints(minHeight: constraints.maxHeight),
               child: Center(
                 child: Padding(
-                  padding: const EdgeInsets.all(24.0),
+                  padding: const EdgeInsets.all(22.0),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -181,17 +182,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         ),
                       ],
                       const SizedBox(height: 24),
-                      ElevatedButton(
-                        onPressed: _isLoading ? null : _handleCreateAccount,
-                        child: _isLoading
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Text('Create Account'),
+                      LoadingElevatedButton(
+                        isLoading: _isLoading,
+                        onPressed: _handleCreateAccount,
+                        label: 'Create Account',
                       ),
                       const SizedBox(height: 16),
                       Row(

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../widgets/arrow_chip.dart';
 import '../widgets/grouped_card.dart';
 
 class ScorecardDetailScreen extends StatelessWidget {
@@ -111,18 +112,9 @@ class _ReadOnlyEndRow extends StatelessWidget {
           Expanded(
             child: Wrap(
               spacing: 6,
-              children: arrowScores.map((score) {
-                return Container(
-                  width: 32,
-                  height: 32,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: theme.colorScheme.primary.withValues(alpha: 0.12),
-                  ),
-                  child: Text('$score', style: theme.textTheme.bodySmall),
-                );
-              }).toList(),
+              children: arrowScores
+                  .map((score) => ArrowChip(score: score))
+                  .toList(),
             ),
           ),
           Text('$endTotal', style: theme.textTheme.titleMedium),

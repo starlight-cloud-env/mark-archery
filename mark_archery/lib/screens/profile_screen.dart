@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../main.dart';
+import '../widgets/confirm_dialog.dart';
 import '../widgets/grouped_card.dart';
+import '../widgets/ios_tab_bar.dart';
 import 'splash_screen.dart';
 import 'edit_profile_screen.dart';
 import 'change_password_screen.dart';
@@ -53,25 +55,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _handleSignOut(BuildContext context) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Sign Out'),
-        content: const Text('Are you sure you want to sign out?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Sign Out'),
-          ),
-        ],
-      ),
+    final confirmed = await showConfirmDialog(
+      context,
+      title: 'Sign Out',
+      message: 'Are you sure you want to sign out?',
+      confirmLabel: 'Sign Out',
+      isDestructive: false,
     );
 
-    if (confirmed != true) return;
+    if (!confirmed) return;
 
     await supabase.auth.signOut();
 
@@ -102,7 +94,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         if (snapshot.hasError) {
           return Center(
             child: Padding(
-              padding: const EdgeInsets.all(24.0),
+              padding: const EdgeInsets.all(22.0),
               child: Text(
                 'Could not load profile: ${snapshot.error}',
                 textAlign: TextAlign.center,
@@ -120,7 +112,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
           slivers: [
             const SliverAppBar.large(title: Text('Profile')),
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
+              padding: EdgeInsets.fromLTRB(
+                16,
+                0,
+                16,
+                MediaQuery.of(context).padding.bottom + iosTabBarHeight + 16,
+              ),
               sliver: SliverToBoxAdapter(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

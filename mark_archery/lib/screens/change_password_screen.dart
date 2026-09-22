@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../main.dart';
+import '../widgets/loading_elevated_button.dart';
 
 class ChangePasswordScreen extends StatefulWidget {
   const ChangePasswordScreen({super.key});
@@ -88,15 +89,10 @@ class _ChangePasswordScreenState extends State<ChangePasswordScreen> {
               ),
             ],
             const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: _isSaving ? null : _handleChangePassword,
-              child: _isSaving
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Update Password'),
+            LoadingElevatedButton(
+              isLoading: _isSaving,
+              onPressed: _handleChangePassword,
+              label: 'Update Password',
             ),
           ],
         ),

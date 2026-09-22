@@ -4,7 +4,9 @@ import 'package:flutter/services.dart';
 
 import '../main.dart';
 import '../models/scorecard.dart';
+import '../widgets/arrow_chip.dart';
 import '../widgets/grouped_card.dart';
+import '../widgets/loading_elevated_button.dart';
 import 'home_shell.dart';
 
 class ScoringScreen extends StatefulWidget {
@@ -255,15 +257,10 @@ class _ScoringScreenState extends State<ScoringScreen> {
                 padding: const EdgeInsets.all(16.0),
                 child: SizedBox(
                   width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: _isSaving ? null : _handleFinish,
-                    child: _isSaving
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Text('Finish & Save'),
+                  child: LoadingElevatedButton(
+                    isLoading: _isSaving,
+                    onPressed: _handleFinish,
+                    label: 'Finish & Save',
                   ),
                 ),
               ),
@@ -307,7 +304,7 @@ class _EndRow extends StatelessWidget {
               child: Wrap(
                 spacing: 6,
                 children: arrowScores
-                    .map((score) => _ArrowChip(score: score))
+                    .map((score) => ArrowChip(score: score))
                     .toList(),
               ),
             ),
@@ -315,36 +312,6 @@ class _EndRow extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _ArrowChip extends StatelessWidget {
-  final int? score;
-
-  const _ArrowChip({required this.score});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isEmpty = score == null;
-
-    return Container(
-      width: 32,
-      height: 32,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: isEmpty
-              ? theme.colorScheme.outlineVariant
-              : theme.colorScheme.primary,
-        ),
-        color: isEmpty
-            ? null
-            : theme.colorScheme.primary.withValues(alpha: 0.12),
-      ),
-      child: Text(isEmpty ? '' : '$score', style: theme.textTheme.bodySmall),
     );
   }
 }

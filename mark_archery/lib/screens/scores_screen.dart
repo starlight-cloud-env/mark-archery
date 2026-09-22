@@ -3,6 +3,9 @@ import 'package:flutter/material.dart';
 
 import '../main.dart';
 import '../models/scorecard.dart';
+import '../widgets/confirm_dialog.dart';
+import '../widgets/ios_tab_bar.dart';
+import '../widgets/round_progress_bar.dart';
 import 'new_scorecard_screen.dart';
 import 'scorecard_detail_screen.dart';
 import 'scoring_screen.dart';
@@ -40,7 +43,23 @@ class ScoresScreenState extends State<ScoresScreen> {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          const SliverAppBar.large(title: Text('Scores')),
+          SliverAppBar.large(
+            title: const Text('Scores'),
+            actions: [
+              IconButton(
+                icon: const Icon(CupertinoIcons.add),
+                tooltip: 'New Scorecard',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const NewScorecardScreen(),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
@@ -147,7 +166,12 @@ class ActiveScoresViewState extends State<_ActiveScoresView> {
               },
             ),
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
+              padding: EdgeInsets.fromLTRB(
+                16,
+                4,
+                16,
+                MediaQuery.of(context).padding.bottom + iosTabBarHeight + 16,
+              ),
               sliver: SliverList.separated(
                 itemCount: rounds.length,
                 separatorBuilder: (context, index) =>
@@ -169,32 +193,13 @@ class ActiveScoresViewState extends State<_ActiveScoresView> {
                         color: Colors.white,
                       ),
                     ),
-                    confirmDismiss: (direction) async {
-                      return await showDialog<bool>(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text('Abandon this round?'),
-                          content: Text(
-                            'This will permanently delete "${round.name}" and its progress.',
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, false),
-                              child: const Text('Cancel'),
-                            ),
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, true),
-                              child: Text(
-                                'Delete',
-                                style: TextStyle(
-                                  color: theme.colorScheme.error,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
+                    confirmDismiss: (direction) => showConfirmDialog(
+                      context,
+                      title: 'Abandon this round?',
+                      message:
+                          'This will permanently delete "${round.name}" and its progress.',
+                      confirmLabel: 'Delete',
+                    ),
                     onDismissed: (direction) async {
                       await _deleteRound(round.id);
                     },
@@ -270,17 +275,7 @@ class _ActiveRoundCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 10),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(4),
-                child: LinearProgressIndicator(
-                  value: progress,
-                  minHeight: 6,
-                  backgroundColor: theme.colorScheme.primary.withValues(
-                    alpha: 0.15,
-                  ),
-                  color: theme.colorScheme.primary,
-                ),
-              ),
+              RoundProgressBar(progress: progress),
             ],
           ),
         ),
@@ -412,7 +407,12 @@ class HistoryViewState extends State<_HistoryView> {
               },
             ),
             SliverPadding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
+              padding: EdgeInsets.fromLTRB(
+                16,
+                4,
+                16,
+                MediaQuery.of(context).padding.bottom + iosTabBarHeight + 16,
+              ),
               sliver: SliverToBoxAdapter(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -455,34 +455,13 @@ class HistoryViewState extends State<_HistoryView> {
                               color: Colors.white,
                             ),
                           ),
-                          confirmDismiss: (direction) async {
-                            return await showDialog<bool>(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                title: const Text('Delete this round?'),
-                                content: Text(
-                                  'This will permanently delete "${round.name}" from your history.',
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.pop(context, false),
-                                    child: const Text('Cancel'),
-                                  ),
-                                  TextButton(
-                                    onPressed: () =>
-                                        Navigator.pop(context, true),
-                                    child: Text(
-                                      'Delete',
-                                      style: TextStyle(
-                                        color: theme.colorScheme.error,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
+                          confirmDismiss: (direction) => showConfirmDialog(
+                            context,
+                            title: 'Delete this round?',
+                            message:
+                                'This will permanently delete "${round.name}" from your history.',
+                            confirmLabel: 'Delete',
+                          ),
                           onDismissed: (direction) async {
                             await _deleteRound(round.id);
                           },

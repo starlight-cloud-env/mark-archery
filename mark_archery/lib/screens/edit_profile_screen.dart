@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../main.dart';
+import '../widgets/loading_elevated_button.dart';
 
 class EditProfileScreen extends StatefulWidget {
   final String currentName;
@@ -66,15 +67,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               decoration: const InputDecoration(labelText: 'Name'),
             ),
             const SizedBox(height: 24),
-            ElevatedButton(
-              onPressed: _isSaving ? null : _handleSave,
-              child: _isSaving
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Text('Save Changes'),
+            LoadingElevatedButton(
+              isLoading: _isSaving,
+              onPressed: _handleSave,
+              label: 'Save Changes',
             ),
           ],
         ),

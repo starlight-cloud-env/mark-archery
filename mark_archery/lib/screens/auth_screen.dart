@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../main.dart';
+import '../widgets/loading_elevated_button.dart';
 import 'forgot_password_screen.dart';
 import 'home_shell.dart';
 import 'signup_screen.dart';
@@ -120,7 +121,7 @@ class _AuthScreenState extends State<AuthScreen> {
               constraints: BoxConstraints(minHeight: constraints.maxHeight),
               child: Center(
                 child: Padding(
-                  padding: const EdgeInsets.all(24.0),
+                  padding: const EdgeInsets.all(22.0),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -176,17 +177,10 @@ class _AuthScreenState extends State<AuthScreen> {
                         ),
                       ],
                       const SizedBox(height: 24),
-                      ElevatedButton(
-                        onPressed: _isLoading ? null : _handleLogIn,
-                        child: _isLoading
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : const Text('Log In'),
+                      LoadingElevatedButton(
+                        isLoading: _isLoading,
+                        onPressed: _handleLogIn,
+                        label: 'Log In',
                       ),
                       const SizedBox(height: 16),
                       Row(
