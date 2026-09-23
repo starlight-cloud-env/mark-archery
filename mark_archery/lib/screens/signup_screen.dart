@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 
 import '../main.dart';
 import '../widgets/loading_elevated_button.dart';
-import 'home_shell.dart';
+import '../widgets/social_sign_in_buttons.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -67,50 +66,6 @@ class _SignUpScreenState extends State<SignUpScreen> {
     } catch (e) {
       setState(() {
         _errorMessage = 'Something went wrong. Please try again.';
-      });
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  Future<void> _handleGoogleSignIn() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    try {
-      final googleSignIn = GoogleSignIn.instance;
-      await googleSignIn.initialize(
-        serverClientId: '779518587521-hbneugdgrdut7ielejhqhqm4ti2ipco2.apps.googleusercontent.com',
-      );
-      final googleUser = await googleSignIn.authenticate();
-
-      final googleAuth = googleUser.authentication;
-      final idToken = googleAuth.idToken;
-
-      if (idToken == null) {
-        throw Exception('No ID token received from Google');
-      }
-
-      await supabase.auth.signInWithIdToken(
-        provider: OAuthProvider.google,
-        idToken: idToken,
-      );
-
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => HomeShell()),
-        );
-      }
-    } catch (e) {
-      setState(() {
-        _errorMessage = 'Google sign-in failed. Please try again.';
       });
     } finally {
       if (mounted) {
@@ -206,10 +161,9 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         ],
                       ),
                       const SizedBox(height: 16),
-                      OutlinedButton.icon(
-                        onPressed: _isLoading ? null : _handleGoogleSignIn,
-                        icon: const Icon(Icons.g_mobiledata, size: 28),
-                        label: const Text('Continue with Google'),
+                      SocialSignInButtons(
+                        onError: (message) =>
+                            setState(() => _errorMessage = message),
                       ),
                     ],
                   ),
