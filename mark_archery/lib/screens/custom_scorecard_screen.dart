@@ -2,7 +2,9 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 import '../main.dart';
+import '../theme/app_theme.dart';
 import '../widgets/grouped_card.dart';
+import '../widgets/ledger_checkbox.dart';
 import '../widgets/loading_elevated_button.dart';
 import 'scoring_screen.dart';
 
@@ -133,23 +135,25 @@ class _CustomScorecardScreenState extends State<CustomScorecardScreen> {
                         const Spacer(),
                         Text(
                           '${_ends * _arrowsPerEnd}',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            color: theme.colorScheme.primary,
-                          ),
+                          style: mono(theme.textTheme.titleMedium)
+                              ?.copyWith(color: theme.colorScheme.primary),
                         ),
                       ],
                     ),
                   ),
                   const GroupedCardDivider(),
-                  CheckboxListTile(
-                    value: _saveAsTemplate,
-                    onChanged: (checked) =>
-                        setState(() => _saveAsTemplate = checked ?? false),
-                    title: const Text('Save as a reusable template'),
-                    subtitle: const Text(
-                      'Appears under "Choose a Template" next time',
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12.0,
+                      vertical: 2.0,
                     ),
-                    controlAffinity: ListTileControlAffinity.leading,
+                    child: LedgerCheckbox(
+                      value: _saveAsTemplate,
+                      onChanged: (checked) =>
+                          setState(() => _saveAsTemplate = checked),
+                      label: 'Save as a reusable template',
+                      subtitle: 'Appears under "Choose a Template" next time',
+                    ),
                   ),
                 ],
               ),
@@ -200,7 +204,7 @@ class _NumberStepper extends StatelessWidget {
             child: Text(
               '$value',
               textAlign: TextAlign.center,
-              style: theme.textTheme.titleMedium,
+              style: mono(theme.textTheme.titleMedium),
             ),
           ),
           IconButton(

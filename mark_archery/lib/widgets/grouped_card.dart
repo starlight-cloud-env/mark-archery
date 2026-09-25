@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 
-/// A rounded, bordered container used for "grouped list" style content,
-/// matching the iOS grouped-table-view look used across the app (Home's
-/// stats/activity, Profile's account/preferences/legal sections, etc).
+/// A rounded, bordered container used for "grouped list" style content —
+/// the ledger's grouped sections (Home's stats/activity, Profile's
+/// account/preferences/legal, template and history lists, etc).
 class GroupedCard extends StatelessWidget {
   final Widget child;
 
@@ -14,7 +14,7 @@ class GroupedCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(8),
         border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
       clipBehavior: Clip.antiAlias,
@@ -30,16 +30,43 @@ class GroupedCard extends StatelessWidget {
   }
 }
 
-/// A single row inside a [GroupedCard], with a divider automatically drawn
-/// above every row except the first — mirrors iOS grouped-list separators.
+/// A dashed rule between rows inside a [GroupedCard] — the ledger's
+/// signature divider, standing in for iOS's solid grouped-list separator.
 class GroupedCardDivider extends StatelessWidget {
   const GroupedCardDivider({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Divider(
-      height: 1,
-      color: Theme.of(context).colorScheme.outlineVariant,
+    return CustomPaint(
+      size: const Size(double.infinity, 1),
+      painter: _DashedLinePainter(
+        color: Theme.of(context).colorScheme.outlineVariant,
+      ),
     );
   }
+}
+
+class _DashedLinePainter extends CustomPainter {
+  final Color color;
+
+  const _DashedLinePainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const dashWidth = 4.0;
+    const gapWidth = 3.0;
+    final paint = Paint()
+      ..color = color
+      ..strokeWidth = 1;
+
+    var x = 0.0;
+    while (x < size.width) {
+      canvas.drawLine(Offset(x, 0), Offset(x + dashWidth, 0), paint);
+      x += dashWidth + gapWidth;
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _DashedLinePainter oldDelegate) =>
+      oldDelegate.color != color;
 }

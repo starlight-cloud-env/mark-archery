@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 
 import '../main.dart';
 import '../models/scorecard.dart';
+import '../theme/app_theme.dart';
 import '../widgets/arrow_chip.dart';
 import '../widgets/grouped_card.dart';
 import '../widgets/loading_elevated_button.dart';
@@ -211,9 +212,9 @@ class _ScoringScreenState extends State<ScoringScreen> {
                 children: [
                   Text(
                     '${_scorecard.runningTotal}',
-                    style: theme.textTheme.headlineMedium?.copyWith(
+                    style: mono(theme.textTheme.headlineMedium)?.copyWith(
                       color: theme.colorScheme.primary,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
                   Text(
@@ -298,7 +299,7 @@ class _EndRow extends StatelessWidget {
           children: [
             SizedBox(
               width: 28,
-              child: Text('$endNumber', style: theme.textTheme.bodyLarge),
+              child: Text('$endNumber', style: mono(theme.textTheme.bodyLarge)),
             ),
             Expanded(
               child: Wrap(
@@ -308,7 +309,7 @@ class _EndRow extends StatelessWidget {
                     .toList(),
               ),
             ),
-            Text('$endTotal', style: theme.textTheme.titleMedium),
+            Text('$endTotal', style: mono(theme.textTheme.titleMedium)),
           ],
         ),
       ),

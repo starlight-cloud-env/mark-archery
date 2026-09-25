@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 
 import '../main.dart';
 import '../models/scorecard.dart';
+import '../theme/app_theme.dart';
 import '../widgets/confirm_dialog.dart';
 import '../widgets/ios_tab_bar.dart';
-import '../widgets/round_progress_bar.dart';
+import '../widgets/ledger_stamp_badge.dart';
+import '../widgets/ledger_tabs.dart';
 import 'new_scorecard_screen.dart';
 import 'scorecard_detail_screen.dart';
 import 'scoring_screen.dart';
@@ -65,23 +67,11 @@ class ScoresScreenState extends State<ScoresScreen> {
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
               child: Align(
                 alignment: Alignment.centerLeft,
-                child: CupertinoSlidingSegmentedControl<ScoresView>(
+                child: LedgerTabs<ScoresView>(
                   groupValue: _selectedView,
-                  children: const {
-                    ScoresView.active: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 20),
-                      child: Text('Active'),
-                    ),
-                    ScoresView.history: Padding(
-                      padding: EdgeInsets.symmetric(horizontal: 20),
-                      child: Text('History'),
-                    ),
-                  },
-                  onValueChanged: (value) {
-                    if (value != null) {
-                      setState(() => _selectedView = value);
-                    }
-                  },
+                  values: const [ScoresView.active, ScoresView.history],
+                  labels: const ['ACTIVE', 'HISTORY'],
+                  onChanged: (value) => setState(() => _selectedView = value),
                 ),
               ),
             ),
@@ -228,12 +218,10 @@ class _ActiveRoundCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final endsDone = scorecard.nextEmptySlot?.end ?? scorecard.totalEnds;
-    final currentEnd = endsDone + 1;
-    final progress = endsDone / scorecard.totalEnds;
 
     return Card(
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
         onTap: () async {
           await Navigator.push(
             context,
@@ -251,31 +239,22 @@ class _ActiveRoundCard extends StatelessWidget {
         },
         child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: Column(
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Icon(CupertinoIcons.scope, color: theme.colorScheme.primary),
-                  const SizedBox(width: 8),
-                  Text(scorecard.name, style: theme.textTheme.titleMedium),
-                  const Spacer(),
-                  Icon(
-                    CupertinoIcons.chevron_forward,
-                    size: 18,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ],
+              LedgerStampBadge(
+                current: endsDone + 1,
+                total: scorecard.totalEnds,
               ),
-              const SizedBox(height: 4),
-              Text(
-                'End $currentEnd of ${scorecard.totalEnds}',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Text(scorecard.name, style: theme.textTheme.titleMedium),
               ),
-              const SizedBox(height: 10),
-              RoundProgressBar(progress: progress),
+              Icon(
+                CupertinoIcons.chevron_forward,
+                size: 18,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ],
           ),
         ),
@@ -339,13 +318,51 @@ class _HistoryView extends StatefulWidget {
   State<_HistoryView> createState() => HistoryViewState();
 }
 
+enum _TimeFilter { all, week, month, year }
+
 class HistoryViewState extends State<_HistoryView> {
   late Future<List<Scorecard>> _scorecardsFuture;
+  final _searchController = TextEditingController();
+  _TimeFilter _timeFilter = _TimeFilter.all;
 
   @override
   void initState() {
     super.initState();
     _scorecardsFuture = _fetchHistory();
+    _searchController.addListener(() => setState(() {}));
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  List<Scorecard> _applyFilters(List<Scorecard> rounds) {
+    final query = _searchController.text.trim().toLowerCase();
+    final now = DateTime.now();
+    final startOfWeek = DateTime(
+      now.year,
+      now.month,
+      now.day,
+    ).subtract(Duration(days: now.weekday - 1));
+
+    return rounds.where((round) {
+      if (query.isNotEmpty && !round.name.toLowerCase().contains(query)) {
+        return false;
+      }
+      switch (_timeFilter) {
+        case _TimeFilter.all:
+          return true;
+        case _TimeFilter.week:
+          return !round.startedAt.isBefore(startOfWeek);
+        case _TimeFilter.month:
+          return round.startedAt.year == now.year &&
+              round.startedAt.month == now.month;
+        case _TimeFilter.year:
+          return round.startedAt.year == now.year;
+      }
+    }).toList();
   }
 
   Future<List<Scorecard>> _fetchHistory() async {
@@ -391,12 +408,18 @@ class HistoryViewState extends State<_HistoryView> {
           return const _EmptyHistoryState();
         }
 
-        final bestScore = rounds
-            .map((r) => r.runningTotal)
-            .reduce((a, b) => a > b ? a : b);
-        final averageScore =
-            rounds.map((r) => r.runningTotal).reduce((a, b) => a + b) /
-            rounds.length;
+        final filteredRounds = _applyFilters(rounds);
+        final bestScore = filteredRounds.isEmpty
+            ? 0
+            : filteredRounds
+                  .map((r) => r.runningTotal)
+                  .reduce((a, b) => a > b ? a : b);
+        final averageScore = filteredRounds.isEmpty
+            ? 0.0
+            : filteredRounds
+                      .map((r) => r.runningTotal)
+                      .reduce((a, b) => a + b) /
+                  filteredRounds.length;
 
         return CustomScrollView(
           slivers: [
@@ -417,82 +440,126 @@ class HistoryViewState extends State<_HistoryView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _SummaryStat(
-                            label: 'Best Score',
-                            value: '$bestScore',
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: _SummaryStat(
-                            label: 'Average',
-                            value: averageScore.toStringAsFixed(1),
-                          ),
-                        ),
-                      ],
+                    TextField(
+                      controller: _searchController,
+                      decoration: const InputDecoration(
+                        labelText: 'Search by name',
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: LedgerTabs<_TimeFilter>(
+                        groupValue: _timeFilter,
+                        values: const [
+                          _TimeFilter.all,
+                          _TimeFilter.week,
+                          _TimeFilter.month,
+                          _TimeFilter.year,
+                        ],
+                        labels: const [
+                          'ALL TIME',
+                          'THIS WEEK',
+                          'THIS MONTH',
+                          'THIS YEAR',
+                        ],
+                        onChanged: (value) =>
+                            setState(() => _timeFilter = value),
+                      ),
                     ),
                     const SizedBox(height: 20),
-                    Text('All Rounds', style: theme.textTheme.titleMedium),
-                    const SizedBox(height: 8),
-                    ...rounds.map(
-                      (round) => Padding(
-                        padding: const EdgeInsets.only(bottom: 8.0),
-                        child: Dismissible(
-                          key: ValueKey(round.id),
-                          direction: DismissDirection.endToStart,
-                          background: Container(
-                            alignment: Alignment.centerRight,
-                            padding: const EdgeInsets.symmetric(horizontal: 20),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.error,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Icon(
-                              CupertinoIcons.delete,
-                              color: Colors.white,
+                    if (filteredRounds.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 24.0),
+                        child: Text(
+                          'No rounds match your filters.',
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      )
+                    else ...[
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _SummaryStat(
+                              label: 'Best Score',
+                              value: '$bestScore',
                             ),
                           ),
-                          confirmDismiss: (direction) => showConfirmDialog(
-                            context,
-                            title: 'Delete this round?',
-                            message:
-                                'This will permanently delete "${round.name}" from your history.',
-                            confirmLabel: 'Delete',
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _SummaryStat(
+                              label: 'Average',
+                              value: averageScore.toStringAsFixed(1),
+                            ),
                           ),
-                          onDismissed: (direction) async {
-                            await _deleteRound(round.id);
-                          },
-                          child: _PastRoundTile(
-                            scorecard: round,
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => ScorecardDetailScreen(
-                                    scorecardName: round.name,
-                                    date: round.startedAt
-                                        .toLocal()
-                                        .toString()
-                                        .split(' ')[0],
-                                    totalScore: round.runningTotal,
-                                    maxPossible: round.maxPossible,
-                                    maxScore: round.maxScore,
-                                    ends: round.ends
-                                        .map(
-                                          (e) => e.map((s) => s ?? 0).toList(),
-                                        )
-                                        .toList(),
-                                  ),
-                                ),
-                              );
+                        ],
+                      ),
+                      const SizedBox(height: 20),
+                      Text('All Rounds', style: theme.textTheme.titleMedium),
+                      const SizedBox(height: 8),
+                      ...filteredRounds.map(
+                        (round) => Padding(
+                          padding: const EdgeInsets.only(bottom: 8.0),
+                          child: Dismissible(
+                            key: ValueKey(round.id),
+                            direction: DismissDirection.endToStart,
+                            background: Container(
+                              alignment: Alignment.centerRight,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                              ),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.error,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: const Icon(
+                                CupertinoIcons.delete,
+                                color: Colors.white,
+                              ),
+                            ),
+                            confirmDismiss: (direction) => showConfirmDialog(
+                              context,
+                              title: 'Delete this round?',
+                              message:
+                                  'This will permanently delete "${round.name}" from your history.',
+                              confirmLabel: 'Delete',
+                            ),
+                            onDismissed: (direction) async {
+                              await _deleteRound(round.id);
                             },
+                            child: _PastRoundTile(
+                              scorecard: round,
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => ScorecardDetailScreen(
+                                      scorecardName: round.name,
+                                      date: round.startedAt
+                                          .toLocal()
+                                          .toString()
+                                          .split(' ')[0],
+                                      totalScore: round.runningTotal,
+                                      maxPossible: round.maxPossible,
+                                      maxScore: round.maxScore,
+                                      ends: round.ends
+                                          .map(
+                                            (e) =>
+                                                e.map((s) => s ?? 0).toList(),
+                                          )
+                                          .toList(),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
                           ),
                         ),
                       ),
-                    ),
+                    ],
                   ],
                 ),
               ),
@@ -522,9 +589,8 @@ class _SummaryStat extends StatelessWidget {
           children: [
             Text(
               value,
-              style: theme.textTheme.titleLarge?.copyWith(
-                color: theme.colorScheme.primary,
-              ),
+              style: mono(theme.textTheme.titleLarge)
+                  ?.copyWith(color: theme.colorScheme.primary),
             ),
             Text(label, style: theme.textTheme.bodySmall),
           ],
@@ -563,7 +629,7 @@ class _PastRoundTile extends StatelessWidget {
           ),
           trailing: Text(
             '${scorecard.runningTotal} / ${scorecard.maxPossible}',
-            style: theme.textTheme.titleMedium,
+            style: mono(theme.textTheme.titleMedium),
           ),
         ),
       ),

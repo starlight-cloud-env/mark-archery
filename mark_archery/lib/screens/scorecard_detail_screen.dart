@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../theme/app_theme.dart';
 import '../widgets/arrow_chip.dart';
 import '../widgets/grouped_card.dart';
 
@@ -42,9 +43,9 @@ class ScorecardDetailScreen extends StatelessWidget {
               children: [
                 Text(
                   '$totalScore / $maxPossible',
-                  style: theme.textTheme.headlineMedium?.copyWith(
+                  style: mono(theme.textTheme.headlineMedium)?.copyWith(
                     color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.w500,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -107,7 +108,7 @@ class _ReadOnlyEndRow extends StatelessWidget {
         children: [
           SizedBox(
             width: 28,
-            child: Text('$endNumber', style: theme.textTheme.bodyLarge),
+            child: Text('$endNumber', style: mono(theme.textTheme.bodyLarge)),
           ),
           Expanded(
             child: Wrap(
@@ -117,7 +118,7 @@ class _ReadOnlyEndRow extends StatelessWidget {
                   .toList(),
             ),
           ),
-          Text('$endTotal', style: theme.textTheme.titleMedium),
+          Text('$endTotal', style: mono(theme.textTheme.titleMedium)),
         ],
       ),
     );

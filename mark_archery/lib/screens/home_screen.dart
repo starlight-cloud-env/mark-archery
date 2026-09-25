@@ -3,9 +3,10 @@ import 'package:flutter/material.dart';
 
 import '../main.dart';
 import '../models/scorecard.dart';
+import '../theme/app_theme.dart';
 import '../widgets/grouped_card.dart';
 import '../widgets/ios_tab_bar.dart';
-import '../widgets/round_progress_bar.dart';
+import '../widgets/ledger_stamp_badge.dart';
 import 'new_scorecard_screen.dart';
 import 'scoring_screen.dart';
 
@@ -278,38 +279,43 @@ class _ContinueRoundCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final endsDone = scorecard.nextEmptySlot?.end ?? scorecard.totalEnds;
-    final progress = endsDone / scorecard.totalEnds;
 
     return GroupedCard(
       child: InkWell(
         onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: Column(
+          child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Icon(CupertinoIcons.scope, color: theme.colorScheme.primary),
-                  const SizedBox(width: 8),
-                  Text('Continue Scoring', style: theme.textTheme.titleMedium),
-                  const Spacer(),
-                  Icon(
-                    CupertinoIcons.chevron_forward,
-                    size: 18,
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ],
+              LedgerStampBadge(
+                current: endsDone + 1,
+                total: scorecard.totalEnds,
               ),
-              const SizedBox(height: 4),
-              Text(
-                '${scorecard.name} · End ${endsDone + 1} of ${scorecard.totalEnds}',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Continue Scoring',
+                      style: theme.textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      scorecard.name,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 12),
-              RoundProgressBar(progress: progress),
+              Icon(
+                CupertinoIcons.chevron_forward,
+                size: 18,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
             ],
           ),
         ),
@@ -340,7 +346,7 @@ class _StatCell extends StatelessWidget {
         children: [
           Icon(icon, color: theme.colorScheme.primary, size: 20),
           const SizedBox(height: 8),
-          Text(value, style: theme.textTheme.titleLarge),
+          Text(value, style: mono(theme.textTheme.titleLarge)),
           Text(label, style: theme.textTheme.bodySmall),
         ],
       ),
@@ -379,7 +385,7 @@ class _RecentScoreTile extends StatelessWidget {
               ],
             ),
           ),
-          Text(score, style: Theme.of(context).textTheme.titleMedium),
+          Text(score, style: mono(Theme.of(context).textTheme.titleMedium)),
         ],
       ),
     );
