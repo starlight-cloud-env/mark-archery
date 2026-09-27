@@ -26,6 +26,8 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>GIDClientID</key>
+	<string>779518587521-hhreqivv8bnpa10etklcqshdbfqtieb1.apps.googleusercontent.com</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -34,6 +36,14 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>com.markarchery.mark</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>google-sign-in</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.779518587521-hhreqivv8bnpa10etklcqshdbfqtieb1</string>
 			</array>
 		</dict>
 	</array>
