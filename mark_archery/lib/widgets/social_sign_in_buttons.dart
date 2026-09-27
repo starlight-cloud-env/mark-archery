@@ -1,3 +1,7 @@
+import 'dart:convert';
+import 'dart:math';
+
+import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:sign_in_with_apple/sign_in_with_apple.dart';
@@ -9,6 +13,22 @@ import 'google_logo.dart';
 
 const _googleServerClientId =
     '779518587521-hbneugdgrdut7ielejhqhqm4ti2ipco2.apps.googleusercontent.com';
+
+/// A random string sent to the provider (hashed) and to Supabase (raw), so
+/// Supabase can confirm the ID token it receives was minted for this exact
+/// sign-in attempt and not replayed from another one.
+String _generateNonce([int length = 32]) {
+  const charset =
+      '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
+  final random = Random.secure();
+  return List.generate(
+    length,
+    (_) => charset[random.nextInt(charset.length)],
+  ).join();
+}
+
+String _sha256OfString(String input) =>
+    sha256.convert(utf8.encode(input)).toString();
 
 /// "Continue with Google" and "Continue with Apple" buttons, handling the
 /// full sign-in flow (including navigating to [HomeShell] on success)
@@ -29,8 +49,16 @@ class _SocialSignInButtonsState extends State<SocialSignInButtons> {
 
   bool get _isBusy => _isGoogleLoading || _isAppleLoading;
 
-  Future<void> _completeSignIn(String idToken, OAuthProvider provider) async {
-    await supabase.auth.signInWithIdToken(provider: provider, idToken: idToken);
+  Future<void> _completeSignIn(
+    String idToken,
+    OAuthProvider provider,
+    String rawNonce,
+  ) async {
+    await supabase.auth.signInWithIdToken(
+      provider: provider,
+      idToken: idToken,
+      nonce: rawNonce,
+    );
 
     if (mounted) {
       Navigator.pushReplacement(
@@ -44,8 +72,14 @@ class _SocialSignInButtonsState extends State<SocialSignInButtons> {
     setState(() => _isGoogleLoading = true);
 
     try {
+      final rawNonce = _generateNonce();
+      final hashedNonce = _sha256OfString(rawNonce);
+
       final googleSignIn = GoogleSignIn.instance;
-      await googleSignIn.initialize(serverClientId: _googleServerClientId);
+      await googleSignIn.initialize(
+        serverClientId: _googleServerClientId,
+        nonce: hashedNonce,
+      );
       final googleUser = await googleSignIn.authenticate();
 
       final idToken = googleUser.authentication.idToken;
@@ -53,7 +87,7 @@ class _SocialSignInButtonsState extends State<SocialSignInButtons> {
         throw Exception('No ID token received from Google');
       }
 
-      await _completeSignIn(idToken, OAuthProvider.google);
+      await _completeSignIn(idToken, OAuthProvider.google, rawNonce);
     } catch (e) {
       widget.onError('Google sign-in failed: $e');
     } finally {
@@ -65,11 +99,15 @@ class _SocialSignInButtonsState extends State<SocialSignInButtons> {
     setState(() => _isAppleLoading = true);
 
     try {
+      final rawNonce = _generateNonce();
+      final hashedNonce = _sha256OfString(rawNonce);
+
       final credential = await SignInWithApple.getAppleIDCredential(
         scopes: [
           AppleIDAuthorizationScopes.email,
           AppleIDAuthorizationScopes.fullName,
         ],
+        nonce: hashedNonce,
       );
 
       final idToken = credential.identityToken;
@@ -77,7 +115,7 @@ class _SocialSignInButtonsState extends State<SocialSignInButtons> {
         throw Exception('No ID token received from Apple');
       }
 
-      await _completeSignIn(idToken, OAuthProvider.apple);
+      await _completeSignIn(idToken, OAuthProvider.apple, rawNonce);
     } catch (e) {
       widget.onError('Apple sign-in failed: $e');
     } finally {
