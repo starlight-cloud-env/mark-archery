@@ -89,7 +89,7 @@ class _SocialSignInButtonsState extends State<SocialSignInButtons> {
 
       await _completeSignIn(idToken, OAuthProvider.google, rawNonce);
     } catch (e) {
-      widget.onError('Google sign-in failed: $e');
+      widget.onError('Google sign-in failed. Please try again.');
     } finally {
       if (mounted) setState(() => _isGoogleLoading = false);
     }
@@ -117,7 +117,7 @@ class _SocialSignInButtonsState extends State<SocialSignInButtons> {
 
       await _completeSignIn(idToken, OAuthProvider.apple, rawNonce);
     } catch (e) {
-      widget.onError('Apple sign-in failed: $e');
+      widget.onError('Apple sign-in failed. Please try again.');
     } finally {
       if (mounted) setState(() => _isAppleLoading = false);
     }
