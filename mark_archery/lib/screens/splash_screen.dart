@@ -24,25 +24,22 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
     return Scaffold(
+      // Fixed to the light Ledger palette regardless of system theme, since
+      // MARK.png bakes its own warm-paper background into the asset.
+      backgroundColor: const Color(0xFFEFE9DD),
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              'Mark',
-              style: theme.textTheme.headlineMedium?.copyWith(
-                color: theme.colorScheme.primary,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
+            Image.asset('assets/icons/MARK.png', width: 320),
+            const SizedBox(height: 8),
+            const Text(
               'Archery Scorecard',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
+              style: TextStyle(
+                fontFamily: 'IBM Plex Sans',
+                fontSize: 14,
+                color: Color(0xFF5A5346),
               ),
             ),
           ],
